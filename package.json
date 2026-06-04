@@ -1,0 +1,16 @@
+{
+  "name": "assignment-breakdown",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "client": "npm start --workspace=client",
+    "server": "npm run dev --workspace=server",
+    "dev": "concurrently \"npm run client\" \"npm run server\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
