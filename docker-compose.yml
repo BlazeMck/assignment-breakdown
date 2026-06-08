@@ -5,7 +5,7 @@
 
 services:
   db:
-    image: supabase/postgres:15.8.1.060
+    image: "${POSTGRES_IMAGE:-public.ecr.aws/supabase/postgres:17.6.1.072}"
     container_name: assignment_breakdown_db
     restart: unless-stopped
     ports:
