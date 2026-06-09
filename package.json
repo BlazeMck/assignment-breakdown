@@ -6,9 +6,19 @@
     "server"
   ],
   "scripts": {
-    "client": "npm start --workspace=client",
-    "server": "npm run dev --workspace=server",
-    "dev": "concurrently \"npm run client\" \"npm run server\""
+    "start": "npm run dev",
+    "dev": "concurrently \"npm run client:start\" \"npm run server:dev\"",
+    "client:start": "npm start --workspace=client",
+    "client:build": "npm run build --workspace=client",
+    "client:test": "npm test --workspace=client",
+    "server:dev": "npm run dev --workspace=server",
+    "server:start": "npm start --workspace=server",
+    "server:seed": "npm run seed --workspace=server",
+    "server:test": "npm test --workspace=server",
+    "test": "npm run test:server",
+    "test:client": "npm run client:test",
+    "test:server": "npm run server:test",
+    "test:watch": "npm run test:watch --workspace=server"
   },
   "devDependencies": {
     "concurrently": "^9.0.0"
