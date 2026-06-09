@@ -9,6 +9,19 @@ async function seedDatabase() {
   try {
     console.log("Starting database seed...");
 
+    // Safety check: Prevent accidental seeding on non-local/production databases
+    const supabaseUrl = process.env.SUPABASE_URL || "";
+    const isRemote = supabaseUrl.includes("supabase.co") || process.env.NODE_ENV === "production";
+    const isForced = process.argv.includes("--force");
+
+    if (isRemote && !isForced) {
+      throw new Error("Seeding aborted: Target database appears to be a remote environment. Use --force to override.");
+    }
+
+    console.log("Cleaning up existing data...");
+    await supabase.from("assignments").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    await supabase.from("users").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+
     // Create test users
     const testUsers = [
       {

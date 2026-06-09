@@ -1,3 +1,7 @@
+/**
+ * Assignment Breakdown Server
+ * Main entry point for the Express API
+ */
 require("dotenv").config();
 const express = require("express");
 const assignmentRoutes = require("./routes/assignments");
@@ -8,6 +12,18 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(express.json({ limit: "1mb" }));
+
+// Content-Type enforcement for mutations
+app.use((req, res, next) => {
+  if (['POST', 'PUT', 'PATCH'].includes(req.method) && !req.is('application/json')) {
+    return res.status(400).json({
+      success: false,
+      error: "Bad Request",
+      message: "Content-Type must be application/json",
+    });
+  }
+  next();
+});
 
 // CORS middleware
 app.use((req, res, next) => {
@@ -38,6 +54,7 @@ app.use("/api/assignments", assignmentRoutes);
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({
+    success: false,
     error: "Not Found",
     message: `Cannot ${req.method} ${req.path}`,
   });

@@ -1,3 +1,7 @@
+/**
+ * Assignments Integration Tests
+ * Validates API endpoints for assignment CRUD operations using a mocked database client
+ */
 const request = require("supertest");
 const app = require("../server");
 const supabase = require("../config/database");
@@ -9,9 +13,18 @@ jest.mock("../config/database", () => ({
 
 describe("Assignment Endpoints", () => {
   beforeEach(() => {
+    // Reset mocks before each test to ensure isolation
     jest.clearAllMocks();
   });
 
+  afterAll(async () => {
+    // Properly close the database pool to prevent hanging handles
+    if (supabase.pool && typeof supabase.pool.end === "function") {
+      await supabase.pool.end();
+    }
+  });
+
+  // Tests for assignment creation
   describe("POST /api/assignments", () => {
     it("should create a new assignment", async () => {
       const assignmentData = {
@@ -70,6 +83,7 @@ describe("Assignment Endpoints", () => {
     });
   });
 
+  // Tests for assignment retrieval (list and filtering)
   describe("GET /api/assignments", () => {
     it("should retrieve all assignments", async () => {
       const mockAssignments = [
@@ -134,6 +148,7 @@ describe("Assignment Endpoints", () => {
     });
   });
 
+  // Tests for single assignment retrieval
   describe("GET /api/assignments/:id", () => {
     it("should retrieve a specific assignment", async () => {
       const assignmentId = "550e8400-e29b-41d4-a716-446655440000";
@@ -185,6 +200,7 @@ describe("Assignment Endpoints", () => {
     });
   });
 
+  // Tests for updating assignments
   describe("PUT /api/assignments/:id", () => {
     it("should update an assignment", async () => {
       const assignmentId = "550e8400-e29b-41d4-a716-446655440000";
@@ -246,6 +262,7 @@ describe("Assignment Endpoints", () => {
     });
   });
 
+  // Tests for assignment deletion
   describe("DELETE /api/assignments/:id", () => {
     it("should delete an assignment", async () => {
       const assignmentId = "550e8400-e29b-41d4-a716-446655440000";
@@ -293,6 +310,7 @@ describe("Assignment Endpoints", () => {
     });
   });
 
+  // Utility and edge case routing tests
   describe("Health check", () => {
     it("should return 200 for health endpoint", async () => {
       const response = await request(app).get("/health");

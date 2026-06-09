@@ -4,41 +4,29 @@ const supabase = require("../config/database");
 const {
   validateAssignment,
   validateAssignmentUpdate,
+  validateUserId,
 } = require("../validators/assignmentValidator");
 const { randomUUID } = require("crypto");
 
-const sendValidationError = (res, error) => {
-  res.status(400).json({
-    error: "Validation Error",
-    details: error.details.map((detail) => ({
-      field: detail.path.join("."),
-      message: detail.message,
-    })),
-  });
-};
-
-const sendNotFoundError = (res, message = "Assignment not found") => {
-  res.status(404).json({
-    success: false,
-    error: message,
-  });
-};
-
-// Create assignment
+/**
+ * POST /api/assignments
+ * Creates a new assignment for a specific user
+ */
 router.post("/", async (req, res, next) => {
   try {
+    // Validate request body
     const { error, value } = validateAssignment(req.body);
     if (error) {
-      return sendValidationError(res, error);
+      return next(error);
     }
 
+    // Generate unique ID and prepare data
     const assignmentData = {
       id: randomUUID(),
       ...value,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
     };
 
+    // Insert into database
     const { data, error: insertError } = await supabase
       .from("assignments")
       .insert([assignmentData])
@@ -57,17 +45,33 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-// Get all assignments
+/**
+ * GET /api/assignments
+ * Retrieves assignments, optionally filtered by user_id
+ */
 router.get("/", async (req, res, next) => {
   try {
-    const { user_id } = req.query;
+    const { user_id, sort_by = "due_date", order = "asc" } = req.query;
+
+    // Validate user_id format if provided in query
+    if (user_id) {
+      const { error } = validateUserId(user_id);
+      if (error) {
+        return next(error);
+      }
+    }
+
     let query = supabase.from("assignments").select("*");
 
+    // Apply user filter
     if (user_id) {
       query = query.eq("user_id", user_id);
     }
 
-    const { data, error } = await query.order("due_date", { ascending: true });
+    // Apply sorting
+    const { data, error } = await query.order(sort_by, {
+      ascending: order !== "desc",
+    });
 
     if (error) {
       throw error;
@@ -82,7 +86,10 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-// Get assignment by ID
+/**
+ * GET /api/assignments/:id
+ * Retrieves a single assignment by its unique ID
+ */
 router.get("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -93,10 +100,6 @@ router.get("/:id", async (req, res, next) => {
       .eq("id", id)
       .single();
 
-    if (error && error.code === "PGRST116") {
-      return sendNotFoundError(res);
-    }
-
     if (error) {
       throw error;
     }
@@ -110,21 +113,30 @@ router.get("/:id", async (req, res, next) => {
   }
 });
 
-// Update assignment
+/**
+ * PUT /api/assignments/:id
+ * Updates an existing assignment's details
+ */
 router.put("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
+    
+    // Validate update payload
     const { error, value } = validateAssignmentUpdate(req.body);
 
     if (error) {
-      return sendValidationError(res, error);
+      return next(error);
     }
 
+    // Explicitly map validated properties to database fields
     const updateData = {
-      ...value,
-      updated_at: new Date().toISOString(),
+      title: value.title,
+      raw_text: value.raw_text,
+      due_date: value.due_date,
+      updated_at: new Date(),
     };
 
+    // Perform update
     const { data, error: updateError } = await supabase
       .from("assignments")
       .update(updateData)
@@ -135,8 +147,11 @@ router.put("/:id", async (req, res, next) => {
       throw updateError;
     }
 
+    // Handle non-existent resource
     if (!data || data.length === 0) {
-      return sendNotFoundError(res);
+      const err = new Error("Assignment not found");
+      err.status = 404;
+      throw err;
     }
 
     res.status(200).json({
@@ -148,7 +163,10 @@ router.put("/:id", async (req, res, next) => {
   }
 });
 
-// Delete assignment
+/**
+ * DELETE /api/assignments/:id
+ * Removes an assignment from the database
+ */
 router.delete("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -163,8 +181,11 @@ router.delete("/:id", async (req, res, next) => {
       throw error;
     }
 
+    // Handle non-existent resource
     if (!data || data.length === 0) {
-      return sendNotFoundError(res);
+      const err = new Error("Assignment not found");
+      err.status = 404;
+      throw err;
     }
 
     res.status(200).json({

@@ -1,3 +1,7 @@
+/**
+ * Database Configuration
+ * Handles initialization for either Supabase or raw PostgreSQL based on environment
+ */
 require("dotenv").config();
 const { createClient } = require("@supabase/supabase-js");
 const { Pool } = require("pg");
@@ -12,9 +16,10 @@ const dbName = process.env.DB_NAME;
 const dbUser = process.env.DB_USER;
 const dbPassword = process.env.DB_PASSWORD;
 
+// Determine which database driver to use
 const shouldUseSupabase =
-  supabaseUrl &&
-  supabaseKey &&
+  Boolean(supabaseUrl) &&
+  Boolean(supabaseKey) &&
   supabaseUrl !== defaultRawPostgresUrl &&
   !supabaseUrl.startsWith(defaultRawPostgresUrl);
 
@@ -22,6 +27,10 @@ const hasPostgresConfig =
   Boolean(databaseUrl) ||
   Boolean(dbHost && dbPort && dbName && dbUser && dbPassword);
 
+/**
+ * Creates a mock Supabase client that translates commands into raw SQL
+ * using the 'pg' library.
+ */
 function createPostgresClient() {
   const poolConfig = databaseUrl
     ? { connectionString: databaseUrl }
@@ -34,7 +43,13 @@ function createPostgresClient() {
       };
 
   const pool = new Pool(poolConfig);
+  
+  const escapeId = (id) => `"${id.replace(/"/g, '""')}"`;
 
+  /**
+   * Query builder that implements a subset of Supabase/PostgREST syntax
+   * for local PostgreSQL environments.
+   */
   class PgQueryBuilder {
     constructor(table) {
       this.table = table;
@@ -45,13 +60,22 @@ function createPostgresClient() {
       this.whereClauses = [];
       this.orderBy = null;
       this.singleMode = false;
+      this.limitCount = null;
+      this.offsetCount = null;
     }
 
     select(columns = "*") {
       if (!this.action) {
         this.action = "select";
       }
-      this.columns = columns || "*";
+      if (columns && columns !== "*") {
+        this.columns = columns
+          .split(",")
+          .map((c) => escapeId(c.trim()))
+          .join(", ");
+      } else {
+        this.columns = "*";
+      }
       return this;
     }
 
@@ -79,7 +103,17 @@ function createPostgresClient() {
 
     order(column, options = {}) {
       const ascending = options.ascending !== false;
-      this.orderBy = `${column} ${ascending ? "ASC" : "DESC"}`;
+      this.orderBy = `${escapeId(column)} ${ascending ? "ASC" : "DESC"}`;
+      return this;
+    }
+
+    limit(count) {
+      this.limitCount = count;
+      return this;
+    }
+
+    offset(count) {
+      this.offsetCount = count;
       return this;
     }
 
@@ -95,17 +129,26 @@ function createPostgresClient() {
       const whereClause = this.whereClauses
         .map(({ column, operator, value }, index) => {
           params.push(value);
-          return `"${column}" ${operator} $${index + 1}`;
+          return `${escapeId(column)} ${operator} $${index + 1}`;
         })
         .join(" AND ");
 
       const whereSql = whereClause ? `WHERE ${whereClause}` : "";
 
+      // SELECT logic
       if (this.action === "select") {
-        sql = `SELECT ${this.columns} FROM "${this.table}" ${whereSql}`;
+        sql = `SELECT ${this.columns} FROM ${escapeId(this.table)} ${whereSql}`;
         if (this.orderBy) {
           sql += ` ORDER BY ${this.orderBy}`;
         }
+        if (this.limitCount !== null) {
+          sql += ` LIMIT ${Number(this.limitCount)}`;
+        }
+        if (this.offsetCount !== null) {
+          sql += ` OFFSET ${Number(this.offsetCount)}`;
+        }
+        
+      // INSERT logic
       } else if (this.action === "insert") {
         const rows = Array.isArray(this.payload)
           ? this.payload
@@ -115,33 +158,37 @@ function createPostgresClient() {
         }
 
         const keys = Object.keys(rows[0]);
-        const columns = keys.map((key) => `"${key}"`).join(", ");
+        const columns = keys.map((key) => escapeId(key)).join(", ");
         const valuesSql = rows
-          .map((row, rowIndex) => {
-            const rowKeys = Object.keys(row);
-            const placeholderRow = rowKeys
-              .map((key, keyIndex) => {
+          .map((row) => {
+            // Use the keys from the first row to ensure column alignment
+            const placeholderRow = keys
+              .map((key) => {
                 params.push(row[key]);
-                return `$${rowIndex * rowKeys.length + keyIndex + 1}`;
+                return `$${params.length}`;
               })
               .join(", ");
             return `(${placeholderRow})`;
           })
           .join(", ");
 
-        sql = `INSERT INTO "${this.table}" (${columns}) VALUES ${valuesSql} RETURNING ${this.columns}`;
+        sql = `INSERT INTO ${escapeId(this.table)} (${columns}) VALUES ${valuesSql} RETURNING ${this.columns}`;
+        
+      // UPDATE logic
       } else if (this.action === "update") {
         const keys = Object.keys(this.payload || {});
         const setClause = keys
           .map((key, idx) => {
             params.push(this.payload[key]);
-            return `"${key}" = $${params.length}`;
+            return `${escapeId(key)} = $${params.length}`;
           })
           .join(", ");
 
-        sql = `UPDATE "${this.table}" SET ${setClause} ${whereSql} RETURNING ${this.columns}`;
+        sql = `UPDATE ${escapeId(this.table)} SET ${setClause} ${whereSql} RETURNING ${this.columns}`;
+        
+      // DELETE logic
       } else if (this.action === "delete") {
-        sql = `DELETE FROM "${this.table}" ${whereSql} RETURNING ${this.columns}`;
+        sql = `DELETE FROM ${escapeId(this.table)} ${whereSql} RETURNING ${this.columns}`;
       } else {
         throw new Error("Unsupported database action");
       }
@@ -168,8 +215,9 @@ function createPostgresClient() {
       }
     }
 
-    then(resolve, reject) {
-      return this.execute().then(resolve, reject);
+    // Support for async/await
+    then(onFulfilled, onRejected) {
+      return this.execute().then(onFulfilled, onRejected);
     }
   }
 
@@ -180,6 +228,7 @@ function createPostgresClient() {
   };
 }
 
+// Initialize the appropriate client
 let client;
 if (shouldUseSupabase) {
   client = createClient(supabaseUrl, supabaseKey);

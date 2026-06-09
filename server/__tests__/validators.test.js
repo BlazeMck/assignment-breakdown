@@ -1,9 +1,14 @@
+/**
+ * Validator Unit Tests
+ * Tests the Joi schemas for assignments to ensure strict data validation
+ */
 const {
   validateAssignment,
   validateAssignmentUpdate,
 } = require("../validators/assignmentValidator");
 
 describe("Assignment Validators", () => {
+  // Tests for the creation schema (all fields required)
   describe("validateAssignment", () => {
     it("should validate correct assignment data", () => {
       const validData = {
@@ -91,6 +96,7 @@ describe("Assignment Validators", () => {
     });
   });
 
+  // Tests for the update schema (partial fields allowed)
   describe("validateAssignmentUpdate", () => {
     it("should validate partial update data", () => {
       const updateData = {

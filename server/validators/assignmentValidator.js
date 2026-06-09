@@ -1,5 +1,10 @@
+/**
+ * Assignment Validation Schemas
+ * Uses Joi to ensure data integrity for both creation and updates
+ */
 const Joi = require("joi");
 
+// Schema for creating new assignments
 const assignmentSchema = Joi.object({
   user_id: Joi.string().uuid().required(),
   raw_text: Joi.string().min(1).required(),
@@ -7,6 +12,7 @@ const assignmentSchema = Joi.object({
   due_date: Joi.date().iso().required(),
 });
 
+// Schema for updating assignments (partial updates allowed)
 const assignmentUpdateSchema = Joi.object({
   raw_text: Joi.string().min(1),
   title: Joi.string().min(1).max(255),
@@ -21,7 +27,14 @@ const validateAssignmentUpdate = (data) => {
   return assignmentUpdateSchema.validate(data);
 };
 
+const validateUserId = (userId) => {
+  return Joi.object({
+    user_id: Joi.string().uuid().required(),
+  }).validate({ user_id: userId });
+};
+
 module.exports = {
   validateAssignment,
   validateAssignmentUpdate,
+  validateUserId,
 };

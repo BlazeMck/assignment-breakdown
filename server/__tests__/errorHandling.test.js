@@ -1,3 +1,7 @@
+/**
+ * Error Handling Integration Tests
+ * Verifies that the server correctly maps database errors and request malformations to HTTP responses
+ */
 const request = require("supertest");
 const app = require("../server");
 const supabase = require("../config/database");
@@ -6,9 +10,11 @@ jest.mock("../config/database");
 
 describe("Assignment Error Handling", () => {
   beforeEach(() => {
+    // Ensure a clean slate for mocks between error scenarios
     jest.clearAllMocks();
   });
 
+  // Simulated database constraint failures
   describe("Database Errors", () => {
     it("should handle unique constraint violation", async () => {
       const assignmentData = {
@@ -61,6 +67,7 @@ describe("Assignment Error Handling", () => {
     });
   });
 
+  // Verification of security and protocol headers
   describe("CORS Headers", () => {
     it("should include CORS headers in response", async () => {
       const response = await request(app).get("/health");
@@ -80,6 +87,7 @@ describe("Assignment Error Handling", () => {
     });
   });
 
+  // Testing of invalid or improperly formatted client requests
   describe("Malformed Requests", () => {
     it("should handle JSON parse errors", async () => {
       const response = await request(app)
