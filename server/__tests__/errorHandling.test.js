@@ -14,6 +14,13 @@ describe("Assignment Error Handling", () => {
     jest.clearAllMocks();
   });
 
+  afterAll(async () => {
+    // Ensure handles are closed even in error testing suites
+    if (supabase.pool && typeof supabase.pool.end === "function") {
+      await supabase.pool.end();
+    }
+  });
+
   // Simulated database constraint failures
   describe("Database Errors", () => {
     it("should handle unique constraint violation", async () => {

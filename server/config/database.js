@@ -101,6 +101,11 @@ function createPostgresClient() {
       return this;
     }
 
+    neq(column, value) {
+      this.whereClauses.push({ column, operator: "<>", value });
+      return this;
+    }
+
     order(column, options = {}) {
       const ascending = options.ascending !== false;
       this.orderBy = `${escapeId(column)} ${ascending ? "ASC" : "DESC"}`;
@@ -164,7 +169,8 @@ function createPostgresClient() {
             // Use the keys from the first row to ensure column alignment
             const placeholderRow = keys
               .map((key) => {
-                params.push(row[key]);
+                const val = row[key];
+                params.push(val === undefined ? null : val);
                 return `$${params.length}`;
               })
               .join(", ");
@@ -177,6 +183,10 @@ function createPostgresClient() {
       // UPDATE logic
       } else if (this.action === "update") {
         const keys = Object.keys(this.payload || {});
+        if (keys.length === 0) {
+          return { data: null, error: new Error("Update payload cannot be empty") };
+        }
+        
         const setClause = keys
           .map((key, idx) => {
             params.push(this.payload[key]);

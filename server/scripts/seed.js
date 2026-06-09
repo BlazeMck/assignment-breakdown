@@ -39,16 +39,11 @@ async function seedDatabase() {
     ];
 
     console.log("Inserting test users...");
-    for (const user of testUsers) {
-      const { error: singleUserError } = await supabase
-        .from("users")
-        .insert([user]);
+    const { error: userError } = await supabase
+      .from("users")
+      .insert(testUsers);
 
-      if (singleUserError && singleUserError.code !== "23505") {
-        console.error("Error inserting user:", user.email, singleUserError);
-        throw singleUserError;
-      }
-    }
+    if (userError && userError.code !== "23505") throw userError;
 
     console.log("Users inserted successfully or already existed");
 
@@ -78,20 +73,11 @@ async function seedDatabase() {
     ];
 
     console.log("Inserting test assignments...");
-    for (const assignment of testAssignments) {
-      const { error: singleAssignmentError } = await supabase
-        .from("assignments")
-        .insert([assignment]);
+    const { error: assignmentsError } = await supabase
+      .from("assignments")
+      .insert(testAssignments);
 
-      if (singleAssignmentError && singleAssignmentError.code !== "23505") {
-        console.error(
-          "Error inserting assignment:",
-          assignment.id,
-          singleAssignmentError,
-        );
-        throw singleAssignmentError;
-      }
-    }
+    if (assignmentsError && assignmentsError.code !== "23505") throw assignmentsError;
 
     console.log("Assignments inserted successfully or already existed");
 
