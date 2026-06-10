@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import InputField from '../components/InputField.jsx';
+import Button from '../components/Button.jsx';
+
 
 function Signup() {
     const [formData, setFormData] = useState({
@@ -52,57 +55,60 @@ function Signup() {
     };
 
     return (
-        <div className="flex flex-col min-h-screen items-center justify-center bg-slate-50 px-4">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Sign Up</h1>
-            <form onSubmit={handleSubmit} className="flex flex-col w-full max-w-md rounded-xl bg-white p-8 shadow-md border border-slate-100 space-y-5">
-                <input
-                    type="text"
-                    name="firstName"
-                    placeholder="First Name"
-                    value={formData.firstName}
-                    onChange={handleChange}
+        <div className="flex flex-col min-h-screen items-center justify-center bg-white dark:bg-gray-800 px-4">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-6">Sign Up</h1>
+            <form onSubmit={handleSubmit} className="flex flex-col w-full max-w-md rounded-xl bg-white p-8 shadow-md border border-slate-100 space-y-8">
+                
+                <InputField 
+                    type="text" 
+                    name="firstName" 
+                    placeholder="First Name" 
+                    value={formData.firstName} 
+                    onChange={handleChange} 
+                    error={errors.firstName} 
                 />
-                {errors.firstName && <span className="error">{errors.firstName}</span>}
 
-                <input
-                    type="text"
-                    name="lastName"
-                    placeholder="Last Name"
-                    value={formData.lastName}
-                    onChange={handleChange}
+                <InputField 
+                    type="text" 
+                    name="lastName" 
+                    placeholder="Last Name" 
+                    value={formData.lastName} 
+                    onChange={handleChange} 
+                    error={errors.lastName} 
                 />
-                {errors.lastName && <span className="error">{errors.lastName}</span>}
 
-                <input
-                    type="email"
-                    name="email"
-                    placeholder="Email Address"
-                    value={formData.email}
-                    onChange={handleChange}
+                <InputField 
+                    type="email" 
+                    name="email" 
+                    placeholder="Email Address" 
+                    value={formData.email} 
+                    onChange={handleChange} 
+                    error={errors.email} 
                 />
-                {errors.email && <span className="error">{errors.email}</span>}
 
-                <input
-                    type="password"
-                    name="password"
-                    placeholder="Password"
-                    value={formData.password}
-                    onChange={handleChange}
+                <InputField 
+                    type="password" 
+                    name="password" 
+                    placeholder="Password" 
+                    value={formData.password} 
+                    onChange={handleChange} 
+                    error={errors.password} 
                 />
-                {errors.password && <span className="error">{errors.password}</span>}
 
-                <input
-                    type="password"
-                    name="confirmPassword"
-                    placeholder="Confirm Password"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
+                <InputField 
+                    type="password" 
+                    name="confirmPassword" 
+                    placeholder="Confirm Password" 
+                    value={formData.confirmPassword} 
+                    onChange={handleChange} 
+                    error={errors.confirmPassword} 
                 />
-                {errors.confirmPassword && <span className="error">{errors.confirmPassword}</span>}
 
-                <button type="submit" disabled={loading}>
-                    {loading ? "Signing up..." : "Sign Up"}
-                </button>
+                <Button 
+                    type="submit" 
+                    disabled={loading}
+                    children={loading ? "Signing up..." : "Sign Up"}
+                />
             </form>
         </div>
     );
