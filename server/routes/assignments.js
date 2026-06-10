@@ -98,10 +98,17 @@ router.get("/:id", async (req, res, next) => {
       .from("assignments")
       .select("*")
       .eq("id", id)
-      .single();
+      .maybeSingle();
 
     if (error) {
       throw error;
+    }
+
+    // Handle non-existent resource
+    if (!data) {
+      const err = new Error("Assignment not found");
+      err.status = 404;
+      throw err;
     }
 
     res.status(200).json({
@@ -130,9 +137,7 @@ router.put("/:id", async (req, res, next) => {
 
     // Explicitly map validated properties to database fields
     const updateData = {
-      title: value.title,
-      raw_text: value.raw_text,
-      due_date: value.due_date,
+      ...value,
       updated_at: new Date(),
     };
 

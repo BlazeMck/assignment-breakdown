@@ -162,7 +162,7 @@ describe("Assignment Endpoints", () => {
       const mockResponse = {
         select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+        maybeSingle: jest.fn().mockResolvedValue({
           data: mockAssignment,
           error: null,
         }),
@@ -183,9 +183,9 @@ describe("Assignment Endpoints", () => {
       const mockResponse = {
         select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+        maybeSingle: jest.fn().mockResolvedValue({
           data: null,
-          error: { code: "PGRST116" },
+          error: null, // maybeSingle returns null data, not an error for not found
         }),
       };
 
@@ -196,7 +196,7 @@ describe("Assignment Endpoints", () => {
       );
 
       expect(response.status).toBe(404);
-      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe("Assignment not found"); // Expect specific error message
     });
   });
 
@@ -259,6 +259,7 @@ describe("Assignment Endpoints", () => {
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe("Assignment not found");
     });
   });
 
@@ -307,6 +308,7 @@ describe("Assignment Endpoints", () => {
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe("Assignment not found");
     });
   });
 

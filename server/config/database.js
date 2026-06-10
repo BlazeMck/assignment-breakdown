@@ -127,6 +127,11 @@ function createPostgresClient() {
       return this;
     }
 
+    maybeSingle() {
+      this.singleMode = "maybe";
+      return this;
+    }
+
     async execute() {
       const params = [];
       let sql;
@@ -189,7 +194,8 @@ function createPostgresClient() {
         
         const setClause = keys
           .map((key, idx) => {
-            params.push(this.payload[key]);
+            const val = this.payload[key];
+            params.push(val === undefined ? null : val);
             return `${escapeId(key)} = $${params.length}`;
           })
           .join(", ");
@@ -206,7 +212,14 @@ function createPostgresClient() {
       try {
         const result = await this.pool.query(sql.trim(), params);
 
-        if (this.singleMode) {
+        if (this.singleMode === "maybe") {
+          if (!result.rows || result.rows.length === 0) {
+            return { data: null, error: null };
+          }
+          return { data: result.rows[0], error: null };
+        }
+
+        if (this.singleMode === true) {
           if (!result.rows || result.rows.length === 0) {
             return {
               data: null,
