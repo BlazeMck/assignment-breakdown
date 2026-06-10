@@ -4,6 +4,8 @@ import Button from '../components/Button.jsx';
 
 
 function Signup() {
+
+    // Data and state management
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
@@ -14,6 +16,7 @@ function Signup() {
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
 
+    // Validation logic
     const validatePassword = (password) => {
         const errors = [];
         if (password.length < 8) errors.push("At least 8 characters");
@@ -47,6 +50,8 @@ function Signup() {
         }
 
         setErrors(newErrors);
+
+        // If no errors, proceed with signup logic
         if (Object.keys(newErrors).length === 0) {
             setLoading(true);
             // TODO: Handle signup API call
