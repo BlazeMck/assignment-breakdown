@@ -9,6 +9,7 @@ export default function Login() {
     });
 
     const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState({});
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -16,11 +17,31 @@ export default function Login() {
             ...prevState,
             [name]: value
         }));
+
+        
     };
+
+    const validateForm = () => {
+        const newErrors = {};
+        if (!formData.email.trim()) {
+            newErrors.email = "Email is required";
+            
+        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+            newErrors.email = "Invalid email format";
+        }
+        if (!formData.password) {
+            newErrors.password = "Password is required";
+        }
+        return newErrors;
+    }
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Handle form submission logic here
+        const newErrors = validateForm();
+        setErrors(newErrors);
+        if (Object.keys(newErrors).length === 0) {
+            // Authentication logic goes here
+        }
     };
 
     return (
