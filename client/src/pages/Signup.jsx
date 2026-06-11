@@ -30,6 +30,9 @@ function Signup() {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
+
+        // Clear error for the field being edited
+        setErrors((prev) => ({ ...prev, [name]: ""}));
     };
 
     const handleSubmit = async (e) => {
