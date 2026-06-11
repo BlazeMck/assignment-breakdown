@@ -18,7 +18,8 @@ export default function Login() {
             [name]: value
         }));
 
-        
+        // Clear error for the field on change
+        setErrors((prev) => ({ ...prev, [name]: ""}));
     };
 
     const validateForm = () => {
@@ -26,8 +27,6 @@ export default function Login() {
         if (!formData.email.trim()) {
             newErrors.email = "Email is required";
             
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = "Invalid email format";
         }
         if (!formData.password) {
             newErrors.password = "Password is required";
@@ -55,6 +54,7 @@ export default function Login() {
                         placeholder="Email Address"
                         value={formData.email}
                         onChange={handleChange}
+                        error={errors.email}
                     />
     
                     <InputField 
@@ -63,10 +63,12 @@ export default function Login() {
                         placeholder="Password"
                         value={formData.password}
                         onChange={handleChange} 
+                        error={errors.password}
                     />
     
                     <Button 
-                        type="submit" 
+                        type="submit"
+                        name="login" 
                         children={loading ? "Logging in..." : "Login"}
                     />
                 </form>
