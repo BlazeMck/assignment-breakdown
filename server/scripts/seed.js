@@ -81,6 +81,33 @@ async function seedDatabase() {
 
     console.log("Assignments inserted successfully or already existed");
 
+    // Create test tasks
+    const testTasks = [
+      {
+        id: "d550e840-0e29-b41d-4a71-644665544000",
+        assignment_id: "a550e840-0e29-b41d-4a71-644665544000",
+        description: "Read chapter 4",
+        priority: 1,
+        time_estimate: 60,
+        status: "pending",
+      },
+      {
+        id: "e550e840-0e29-b41d-4a71-644665544001",
+        assignment_id: "a550e840-0e29-b41d-4a71-644665544000",
+        description: "Write reflection",
+        priority: 2,
+        time_estimate: 90,
+        status: "pending",
+      },
+    ];
+
+    console.log("Inserting test tasks...");
+    const { error: taskError } = await supabase.from("tasks").insert(testTasks);
+
+    if (taskError && taskError.code !== "23505") throw taskError;
+
+    console.log("Tasks inserted successfully or already existed");
+
     console.log("Database seed completed!");
   } catch (error) {
     console.error("Seed error:", error);
