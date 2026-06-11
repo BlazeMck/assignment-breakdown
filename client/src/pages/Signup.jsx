@@ -113,6 +113,7 @@ function Signup() {
                     type="submit" 
                     disabled={loading}
                     children={loading ? "Signing up..." : "Sign Up"}
+                    className = "w-full"
                 />
             </form>
         </div>
