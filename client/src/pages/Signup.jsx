@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext.js'
+import { registerUser } from '../../util/Auth.js';
+import { useNavigate } from "react-router"
 import InputField from '../components/InputField.jsx';
 import Button from '../components/Button.jsx';
 
@@ -15,6 +18,8 @@ function Signup() {
     });
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+    const { login } = useAuth();
+    const navigate = useNavigate();
 
     // Validation logic
     const validatePassword = (password) => {
@@ -54,8 +59,13 @@ function Signup() {
         // If no errors, proceed with signup logic
         if (Object.keys(newErrors).length === 0) {
             setLoading(true);
-            // TODO: Handle signup API call
-            setLoading(false);
+            const newUser = await registerUser(formData.email, formData.password)
+            if (newUser) {
+                login({firstName: formData.firstName, lastName: formData.lastName, email: newUser.email, uuid: newUser.uid})
+                setLoading(false);
+
+                navigate("/")
+            }
         }
     };
 
