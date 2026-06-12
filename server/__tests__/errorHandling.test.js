@@ -6,19 +6,14 @@ const request = require("supertest");
 const app = require("../server");
 const supabase = require("../config/database");
 
-jest.mock("../config/database");
+jest.mock("../config/database", () => ({
+  from: jest.fn(),
+}));
 
 describe("Assignment Error Handling", () => {
   beforeEach(() => {
     // Ensure a clean slate for mocks between error scenarios
     jest.clearAllMocks();
-  });
-
-  afterAll(async () => {
-    // Ensure handles are closed even in error testing suites
-    if (supabase.pool && typeof supabase.pool.end === "function") {
-      await supabase.pool.end();
-    }
   });
 
   // Simulated database constraint failures
@@ -108,7 +103,7 @@ describe("Assignment Error Handling", () => {
     it("should handle missing Content-Type", async () => {
       const response = await request(app)
         .post("/api/assignments")
-        .send({ title: "Test" });
+        .send(JSON.stringify({ title: "Test" }));
 
       expect(response.status).toBe(400);
     });
