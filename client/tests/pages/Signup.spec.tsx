@@ -3,7 +3,7 @@ import { page, userEvent } from 'vitest/browser';
 import { render } from '@testing-library/react';
 import Signup from '../../src/pages/Signup.jsx';
 
-test('validates form inputs', async () => {
+test('validates signup form inputs', async () => {
     
     // Renders component natively in the browser DOM
     render(<Signup />);
