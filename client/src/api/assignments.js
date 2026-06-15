@@ -1,21 +1,22 @@
 /**
- * Send an assignment to the backend to be broken down into prioritized tasks.
+ * Send an assignment to the backend to be broken down into prioritized tasks
+ * and persisted for the given user.
  *
- * @param {{ rawText: string, dueDate?: string }} assignment
- * @returns {Promise<{ title: string, tasks: Array<{description: string, priority: number, time_estimate: 'High'|'Medium'|'Low', status: string}> }>}
+ * @param {{ user_id: string, raw_text: string, due_date: string }} payload
+ * @returns {Promise<{ assignment: object, tasks: Array<object> }>}
  * @throws {Error} with a user-facing message if the request fails.
  */
-export async function breakdownAssignment(assignment) {
+export async function createBreakdown(payload) {
   let response;
   try {
-    response = await fetch('/api/assignments/breakdown', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(assignment),
+    response = await fetch("/api/breakdown", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
     });
   } catch {
     // Network-level failure (server down, no connection, etc.)
-    throw new Error('Could not reach the server. Is the backend running?');
+    throw new Error("Could not reach the server. Is the backend running?");
   }
 
   let data;
@@ -26,8 +27,8 @@ export async function breakdownAssignment(assignment) {
   }
 
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to break down the assignment.');
+    throw new Error(data.message || data.error || "Failed to break down the assignment.");
   }
 
-  return data;
+  return data.data;
 }
