@@ -7,20 +7,19 @@ const Joi = require("joi");
 // Keep the allowed lifecycle values centralized so routes and tests stay in sync.
 const taskStatusValues = ["pending", "in_progress", "completed"];
 
-// time_estimate is a relative effort level rather than a number of minutes.
-const taskEffortValues = ["High", "Medium", "Low"];
-
+// time_estimate is a relative effort level stored as an integer:
+// 1 = Low, 2 = Medium, 3 = High. The client maps these back to labels.
 const taskCreateSchema = Joi.object({
   description: Joi.string().trim().min(1).max(1000).required(),
   priority: Joi.number().integer().min(0).required(),
-  time_estimate: Joi.string().valid(...taskEffortValues).allow(null).optional(),
+  time_estimate: Joi.number().integer().min(1).max(3).allow(null).optional(),
   status: Joi.string().valid(...taskStatusValues).required(),
 });
 
 const taskUpdateSchema = Joi.object({
   description: Joi.string().trim().min(1).max(1000),
   priority: Joi.number().integer().min(0),
-  time_estimate: Joi.string().valid(...taskEffortValues).allow(null),
+  time_estimate: Joi.number().integer().min(1).max(3).allow(null),
   status: Joi.string().valid(...taskStatusValues),
 }).min(1);
 
@@ -33,7 +32,6 @@ const validateUuidParam = (value, fieldName = "id") =>
 
 module.exports = {
   taskStatusValues,
-  taskEffortValues,
   validateTask,
   validateTaskUpdate,
   validateUuidParam,

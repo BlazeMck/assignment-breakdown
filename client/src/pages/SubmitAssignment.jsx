@@ -8,10 +8,11 @@ const EMPTY_FORM = {
   dueDate: "",
 };
 
-const EFFORT_STYLES = {
-  Low: "text-green-700 bg-green-100 border-green-200",
-  Medium: "text-amber-700 bg-amber-100 border-amber-200",
-  High: "text-red-700 bg-red-100 border-red-200",
+// time_estimate is stored as an integer (1 = Low, 2 = Medium, 3 = High).
+const EFFORT = {
+  1: { label: "Low", className: "text-green-700 bg-green-100 border-green-200" },
+  2: { label: "Medium", className: "text-amber-700 bg-amber-100 border-amber-200" },
+  3: { label: "High", className: "text-red-700 bg-red-100 border-red-200" },
 };
 
 export default function SubmitAssignment() {
@@ -171,13 +172,11 @@ export default function SubmitAssignment() {
                     <span className="text-slate-700">
                       {task.priority}. {task.description}
                     </span>
-                    {task.time_estimate && (
+                    {EFFORT[task.time_estimate] && (
                       <span
-                        className={`flex-shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
-                          EFFORT_STYLES[task.time_estimate] ?? ""
-                        }`}
+                        className={`flex-shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${EFFORT[task.time_estimate].className}`}
                       >
-                        {task.time_estimate}
+                        {EFFORT[task.time_estimate].label}
                       </span>
                     )}
                   </li>

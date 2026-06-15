@@ -33,9 +33,9 @@ Guidelines:
 "Find and read 3 peer-reviewed sources"), written in the imperative.
 - Order tasks in the sequence they should be done. The "priority" field is a 1-based \
 integer where 1 is done first.
-- "time_estimate" is the relative effort the task takes, as one of exactly "High", \
-"Medium", or "Low". Use "High" for the most time-consuming/involved tasks, "Low" for \
-quick ones, and "Medium" in between.
+- "time_estimate" is the relative effort the task takes, as an integer: 1 = Low \
+(quick), 2 = Medium, 3 = High (most time-consuming/involved). Use 3 for the heaviest \
+tasks and 1 for the quickest.
 - "status" must always be the string "pending" for newly created tasks.
 - Derive a short "title" (max ~60 chars) summarizing the whole assignment.
 - Consider the due date when sequencing and estimating, but do not invent dates or \
@@ -67,9 +67,9 @@ const RESPONSE_SCHEMA = {
           description: { type: "string" },
           priority: { type: "integer", minimum: 1 },
           time_estimate: {
-            type: "string",
-            enum: ["High", "Medium", "Low"],
-            description: "Relative effort the task takes.",
+            type: "integer",
+            enum: [1, 2, 3],
+            description: "Relative effort: 1 = Low, 2 = Medium, 3 = High.",
           },
           status: { type: "string", enum: ["pending"] },
         },
@@ -82,7 +82,7 @@ const RESPONSE_SCHEMA = {
  * Break an assignment down into prioritized tasks using OpenAI.
  *
  * @param {{ rawText: string, dueDate?: string }} input
- * @returns {Promise<{ title: string, tasks: Array<{description: string, priority: number, time_estimate: 'High'|'Medium'|'Low', status: string}> }>}
+ * @returns {Promise<{ title: string, tasks: Array<{description: string, priority: number, time_estimate: 1|2|3, status: string}> }>}
  */
 async function breakdownAssignment({ rawText, dueDate }) {
   if (!rawText || !rawText.trim()) {
