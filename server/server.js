@@ -1,54 +1,75 @@
-import { fileURLToPath } from 'node:url';
-import path from 'node:path';
-import dotenv from 'dotenv';
-import express from 'express';
-import cors from 'cors';
-
-// Load the root .env regardless of the process working directory.
-// The server is launched from the `server/` workspace, so a bare
-// `dotenv/config` would look for `server/.env` and miss the root file.
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
-
-import { breakdownAssignment } from './openai/breakdown.js';
+/**
+ * Assignment Breakdown Server
+ * Main entry point for the Express API
+ */
+require("dotenv").config();
+const express = require("express");
+const assignmentRoutes = require("./routes/assignments");
+const taskRoutes = require("./routes/tasks");
+const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 3001;
 
-app.use(cors());
-app.use(express.json({ limit: '1mb' }));
+// Middleware
+app.use(express.json({ limit: "1mb" }));
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
-});
-
-/**
- * Take raw assignment text + a due date and return an AI-generated breakdown
- * into prioritized tasks. Does not persist anything yet.
- *
- * Request body:  { rawText: string, dueDate?: string }
- * Response body: { title: string, tasks: [...] }
- */
-app.post('/api/assignments/breakdown', async (req, res) => {
-  const { rawText, dueDate } = req.body ?? {};
-
-  if (typeof rawText !== 'string' || !rawText.trim()) {
-    return res.status(400).json({ error: 'rawText is required and must be a non-empty string.' });
+// Content-Type enforcement for mutations
+app.use((req, res, next) => {
+  if (['POST', 'PUT', 'PATCH'].includes(req.method) && !req.is('application/json')) {
+    return res.status(400).json({
+      success: false,
+      error: "Bad Request",
+      message: "Content-Type must be application/json",
+    });
   }
+  next();
+});
 
-  try {
-    const result = await breakdownAssignment({ rawText, dueDate });
-    return res.status(200).json(result);
-  } catch (err) {
-    console.error('Failed to break down assignment:', err);
+// CORS middleware
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization",
+  );
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
 
-    if (err.message?.includes('OPENAI_API_KEY')) {
-      return res.status(500).json({ error: 'Server is missing its OpenAI configuration.' });
-    }
-    return res.status(502).json({ error: 'Failed to generate an assignment breakdown.' });
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
   }
+  next();
 });
 
-app.listen(PORT, () => {
-  console.log(`Assignment Breakdown server listening on http://localhost:${PORT}`);
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+  });
 });
+
+// Routes
+app.use("/api/assignments", assignmentRoutes);
+app.use("/api/assignments/:assignmentId/tasks", taskRoutes);
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    error: "Not Found",
+    message: `Cannot ${req.method} ${req.path}`,
+  });
+});
+
+// Error handler (must be last)
+app.use(errorHandler);
+
+// Start server
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
