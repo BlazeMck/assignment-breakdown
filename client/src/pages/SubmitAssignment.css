@@ -1,0 +1,252 @@
+.submit-page {
+  --bg: #161618;
+  --surface: #1f1f23;
+  --surface-input: #131316;
+  --border: #34343a;
+  --text: #f5f5f7;
+  --text-muted: #8a8a93;
+  --primary: #6c63f6;
+  --primary-hover: #5b52e8;
+  --accent: #3f6fd1;
+  --accent-hover: #3862bd;
+  --danger: #f87171;
+
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 32px 40px 64px;
+  background-color: var(--bg);
+  color: var(--text);
+  text-align: left;
+}
+
+.submit-page *,
+.submit-page *::before,
+.submit-page *::after {
+  box-sizing: border-box;
+}
+
+/* Header */
+.submit-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.submit-page__title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.submit-page__breadcrumb {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* Body */
+.submit-page__body {
+  margin-top: 32px;
+}
+
+.card {
+  max-width: 740px;
+  padding: 28px 32px 32px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.card__title {
+  margin: 0 0 24px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+/* Form */
+.form__field {
+  margin-bottom: 24px;
+}
+
+.form__label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.form__required {
+  margin-left: 2px;
+  color: var(--text-muted);
+}
+
+.form__textarea,
+.form__input {
+  width: 100%;
+  padding: 12px 14px;
+  font-family: inherit;
+  font-size: 15px;
+  color: var(--text);
+  background-color: var(--surface-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form__textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.form__textarea::placeholder,
+.form__input::placeholder {
+  color: var(--text-muted);
+}
+
+.form__textarea:focus,
+.form__input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(108, 99, 246, 0.25);
+}
+
+/* Make the native date picker icon visible on the dark background */
+.form__input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+.form__error {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--danger);
+}
+
+.form__error--banner {
+  margin-top: 20px;
+  padding: 10px 14px;
+  background-color: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  border-radius: 8px;
+}
+
+/* Breakdown result */
+.breakdown {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.breakdown__title {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.breakdown__list {
+  margin: 0;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.breakdown__item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 15px;
+}
+
+.breakdown__desc {
+  color: var(--text);
+}
+
+.breakdown__effort {
+  flex-shrink: 0;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+
+.breakdown__effort--low {
+  color: #4ade80;
+  background-color: rgba(74, 222, 128, 0.12);
+  border-color: rgba(74, 222, 128, 0.3);
+}
+
+.breakdown__effort--medium {
+  color: #fbbf24;
+  background-color: rgba(251, 191, 36, 0.12);
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+.breakdown__effort--high {
+  color: #f87171;
+  background-color: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.3);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Actions */
+.form__actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+/* Buttons */
+.btn {
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn--add {
+  background-color: var(--accent);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.btn--add:hover {
+  background-color: var(--accent-hover);
+}
+
+.btn--primary {
+  flex: 1;
+  background-color: var(--primary);
+  color: #fff;
+}
+
+.btn--primary:hover {
+  background-color: var(--primary-hover);
+}
+
+.btn--secondary {
+  flex: 1;
+  background-color: transparent;
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.btn--secondary:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+}
