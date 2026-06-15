@@ -1,17 +1,21 @@
-import OpenAI from 'openai';
+/**
+ * OpenAI assignment breakdown service.
+ * Turns raw assignment text + a due date into an ordered list of prioritized tasks.
+ */
+const OpenAI = require("openai");
 
-const MODEL = 'gpt-5-mini';
+const MODEL = "gpt-5-mini";
 
 let client;
 
 /**
- * Lazily create the OpenAI client so importing this module doesn't throw
+ * Lazily create the OpenAI client so requiring this module doesn't throw
  * when OPENAI_API_KEY is missing (e.g. during tests or local boot).
  */
 function getClient() {
   if (!client) {
     if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is not set in the environment.');
+      throw new Error("OPENAI_API_KEY is not set in the environment.");
     }
     client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   }
@@ -44,30 +48,30 @@ not stated or reasonably implied.`;
  * guaranteed to match the shape we persist into the `assignments` / `tasks` tables.
  */
 const RESPONSE_SCHEMA = {
-  type: 'object',
+  type: "object",
   additionalProperties: false,
-  required: ['title', 'tasks'],
+  required: ["title", "tasks"],
   properties: {
     title: {
-      type: 'string',
-      description: 'Short summary title for the whole assignment.',
+      type: "string",
+      description: "Short summary title for the whole assignment.",
     },
     tasks: {
-      type: 'array',
+      type: "array",
       minItems: 1,
       items: {
-        type: 'object',
+        type: "object",
         additionalProperties: false,
-        required: ['description', 'priority', 'time_estimate', 'status'],
+        required: ["description", "priority", "time_estimate", "status"],
         properties: {
-          description: { type: 'string' },
-          priority: { type: 'integer', minimum: 1 },
+          description: { type: "string" },
+          priority: { type: "integer", minimum: 1 },
           time_estimate: {
-            type: 'string',
-            enum: ['High', 'Medium', 'Low'],
-            description: 'Relative effort the task takes.',
+            type: "string",
+            enum: ["High", "Medium", "Low"],
+            description: "Relative effort the task takes.",
           },
-          status: { type: 'string', enum: ['pending'] },
+          status: { type: "string", enum: ["pending"] },
         },
       },
     },
@@ -80,28 +84,28 @@ const RESPONSE_SCHEMA = {
  * @param {{ rawText: string, dueDate?: string }} input
  * @returns {Promise<{ title: string, tasks: Array<{description: string, priority: number, time_estimate: 'High'|'Medium'|'Low', status: string}> }>}
  */
-export async function breakdownAssignment({ rawText, dueDate }) {
+async function breakdownAssignment({ rawText, dueDate }) {
   if (!rawText || !rawText.trim()) {
-    throw new Error('rawText is required to break down an assignment.');
+    throw new Error("rawText is required to break down an assignment.");
   }
 
   const userContent = [
     `Assignment text:\n${rawText.trim()}`,
-    dueDate ? `Due date: ${dueDate}` : 'Due date: not provided',
-  ].join('\n\n');
+    dueDate ? `Due date: ${dueDate}` : "Due date: not provided",
+  ].join("\n\n");
 
   // Note: the gpt-5 family only supports the default temperature (1),
   // so we don't pass a custom temperature here.
   const completion = await getClient().chat.completions.create({
     model: MODEL,
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: userContent },
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: userContent },
     ],
     response_format: {
-      type: 'json_schema',
+      type: "json_schema",
       json_schema: {
-        name: 'assignment_breakdown',
+        name: "assignment_breakdown",
         strict: true,
         schema: RESPONSE_SCHEMA,
       },
@@ -110,7 +114,7 @@ export async function breakdownAssignment({ rawText, dueDate }) {
 
   const raw = completion.choices[0]?.message?.content;
   if (!raw) {
-    throw new Error('OpenAI returned an empty response.');
+    throw new Error("OpenAI returned an empty response.");
   }
 
   const parsed = JSON.parse(raw);
@@ -124,4 +128,4 @@ export async function breakdownAssignment({ rawText, dueDate }) {
   return { title: parsed.title, tasks };
 }
 
-export { MODEL };
+module.exports = { breakdownAssignment, MODEL };
