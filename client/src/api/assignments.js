@@ -15,7 +15,7 @@ export async function createBreakdown(payload) {
       body: JSON.stringify(payload),
     });
   } catch {
-    // Network-level failure (server down, no connection, etc.)
+    // Network-level failure (server down, no connection, etc)
     throw new Error("Could not reach the server. Is the backend running?");
   }
 
