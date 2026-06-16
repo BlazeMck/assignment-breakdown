@@ -1,8 +1,28 @@
+import { useEffect } from "react"
 import { Link } from "react-router"
 import { useAuth } from "../context/AuthContext";
+import { getUserBreakdowns } from "../api/assignments";
 
 export default function Navbar() {
     const { user, logout } = useAuth()
+
+    // When a user logs in, pull their saved assignments + tasks and log them
+    // so we can verify the correct data is associated with the user.
+    useEffect(() => {
+        if (!user?.uuid) return;
+
+        getUserBreakdowns(user.uuid)
+            .then((breakdowns) => {
+                console.log(`Assignments for user ${user.uuid}:`, breakdowns);
+                breakdowns.forEach((a) => {
+                    console.log(`  Assignment: "${a.title}" (due ${a.due_date})`);
+                    a.tasks.forEach((t) =>
+                        console.log(`    ${t.priority}. ${t.description} [effort ${t.time_estimate}, ${t.status}]`),
+                    );
+                });
+            })
+            .catch((err) => console.error("Failed to load user breakdowns:", err));
+    }, [user?.uuid]);
 
     return (
         <nav className="bg-white dark:bg-gray-800 shadow px-4 py-4 flex justify-center space-x-4 items-center">

@@ -96,4 +96,56 @@ router.post("/", async (req, res, next) => {
   }
 });
 
+/**
+ * GET /api/breakdown?user_id=<firebase uid>
+ * Returns all of a user's assignments, each with its tasks nested, ordered
+ * by due date. Used to load a user's saved breakdowns after they log in.
+ */
+router.get("/", async (req, res, next) => {
+  try {
+    const { user_id } = req.query;
+
+    if (typeof user_id !== "string" || !user_id.trim()) {
+      const err = new Error("user_id query parameter is required.");
+      err.status = 400;
+      return next(err);
+    }
+
+    // Fetch the user's assignments.
+    const { data: assignments, error: assignmentsError } = await supabase
+      .from("assignments")
+      .select("*")
+      .eq("user_id", user_id)
+      .order("due_date", { ascending: true });
+
+    if (assignmentsError) {
+      throw assignmentsError;
+    }
+
+    // Attach each assignment's tasks.
+    const withTasks = await Promise.all(
+      (assignments || []).map(async (assignment) => {
+        const { data: tasks, error: tasksError } = await supabase
+          .from("tasks")
+          .select("*")
+          .eq("assignment_id", assignment.id)
+          .order("priority", { ascending: true });
+
+        if (tasksError) {
+          throw tasksError;
+        }
+
+        return { ...assignment, tasks: tasks || [] };
+      }),
+    );
+
+    res.status(200).json({
+      success: true,
+      data: withTasks,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;
