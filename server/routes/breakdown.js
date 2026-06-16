@@ -3,24 +3,26 @@ const router = express.Router();
 const { randomUUID } = require("crypto");
 const supabase = require("../config/database");
 const { breakdownAssignment } = require("../services/breakdown");
-const { validateUserId } = require("../validators/assignmentValidator");
 
 /**
  * POST /api/breakdown
  * Takes raw assignment text + a due date, asks the LLM to break it into
  * prioritized tasks, then persists the assignment and its tasks for the user.
  *
- * Request body:  { user_id: uuid, raw_text: string, due_date: ISO date }
+ * user_id is the Firebase Authentication UID of the logged-in user.
+ *
+ * Request body:  { user_id: string, raw_text: string, due_date: ISO date }
  * Response body: { success: true, data: { assignment, tasks } }
  */
 router.post("/", async (req, res, next) => {
   try {
     const { user_id, raw_text, due_date } = req.body || {};
 
-    // Validate the user the assignment will belong to.
-    const { error: userError } = validateUserId(user_id);
-    if (userError) {
-      return next(userError);
+    // user_id is the Firebase UID (a non-empty string), not a DB uuid.
+    if (typeof user_id !== "string" || !user_id.trim()) {
+      const err = new Error("user_id is required and must be a non-empty string.");
+      err.status = 400;
+      return next(err);
     }
 
     if (typeof raw_text !== "string" || !raw_text.trim()) {
