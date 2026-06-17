@@ -27,7 +27,7 @@ describe("Task Endpoints", () => {
       const taskData = {
         description: "Read chapter 4",
         priority: 1,
-        time_estimate: 2,
+        time_estimate: 60,
         status: "pending",
       };
 

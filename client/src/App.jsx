@@ -4,7 +4,6 @@ import Navbar from './components/Navbar.jsx';
 import Signup from './pages/Signup.jsx';
 import Login from './pages/Login.jsx';
 import Welcome from './pages/Welcome.jsx';
-import SubmitAssignment from './pages/SubmitAssignment.jsx';
 import { AuthProvider } from './context/AuthContext.js';
 
 export default function App() {
@@ -19,7 +18,6 @@ export default function App() {
                 <Route path="/" element={<Welcome />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/login" element={<Login />} />
-                <Route path="/submit" element={<SubmitAssignment />} />
             </Routes>
             </BrowserRouter>
         </AuthProvider>

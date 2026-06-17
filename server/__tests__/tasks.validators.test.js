@@ -14,7 +14,7 @@ describe("Task Validators", () => {
       const validData = {
         description: "Read chapter 4",
         priority: 1,
-        time_estimate: 2,
+        time_estimate: 60,
         status: "pending",
       };
 

@@ -6,7 +6,6 @@ require("dotenv").config();
 const express = require("express");
 const assignmentRoutes = require("./routes/assignments");
 const taskRoutes = require("./routes/tasks");
-const breakdownRoutes = require("./routes/breakdown");
 const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
@@ -51,7 +50,6 @@ app.get("/health", (req, res) => {
 });
 
 // Routes
-app.use("/api/breakdown", breakdownRoutes);
 app.use("/api/assignments", assignmentRoutes);
 app.use("/api/assignments/:assignmentId/tasks", taskRoutes);
 
