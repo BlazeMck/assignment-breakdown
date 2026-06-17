@@ -8,7 +8,7 @@
   "scripts": {
     "start": "npm run dev",
     "dev": "concurrently \"npm run client:start\" \"npm run server:dev\"",
-    "client:start": "npm start --workspace=client",
+    "client:start": "npm run dev --workspace=client",
     "client:build": "npm run build --workspace=client",
     "client:test": "npm test --workspace=client",
     "server:dev": "npm run dev --workspace=server",

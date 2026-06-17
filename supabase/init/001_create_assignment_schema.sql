@@ -21,7 +21,8 @@ create table if not exists public.users (
 
 create table if not exists public.assignments (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references public.users(id) on delete cascade,
+  -- user_id holds the Firebase Authentication UID (not a DB users row).
+  user_id text not null,
   raw_text text not null,
   title text not null,
   due_date timestamptz not null,
