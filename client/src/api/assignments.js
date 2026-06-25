@@ -61,3 +61,29 @@ export async function getUserBreakdowns(userId) {
 
   return data.data;
 }
+
+export async function updateTaskStatus(assignmentId, taskId, status) {
+  let response;
+  try {
+    response = await fetch(`/api/assignments/${assignmentId}/tasks/${taskId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+  } catch {
+    throw new Error("Could not reach the server. Is the backend running?");
+  }
+
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    data = {};
+  }
+
+  if (!response.ok) {
+    throw new Error(data.message || data.error || "Failed to update task status.");
+  }
+
+  return data.data;
+}
