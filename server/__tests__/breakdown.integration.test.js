@@ -24,7 +24,7 @@ const VALID_BODY = {
   due_date: "2026-07-01",
 };
 
-// A deterministic stand-in for what the LLM would return.
+// A deterministic stand-in for what the LLM would return
 const FAKE_BREAKDOWN = {
   title: "Climate change paper",
   tasks: [
