@@ -81,10 +81,10 @@ export default function SubmitAssignment() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 px-6 py-8">
       <header className="flex items-start justify-between border-b border-gray-200 pb-5">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
             Project · Submit Assignment
           </h1>
           <p className="mt-1 text-sm text-gray-500">[ project name / breadcrumb ]</p>

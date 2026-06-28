@@ -14,6 +14,11 @@ export default defineConfig({
       '/api': 'http://localhost:3001',
     },
   },
+  build: {
+    // Ensure proper routing for SPA
+    outDir: 'dist',
+    emptyOutDir: true,
+  },
   test: {
     browser: {
       enabled: true,
