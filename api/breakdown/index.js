@@ -1,6 +1,6 @@
 const { randomUUID } = require("crypto");
 const supabase = require("../lib/database");
-const { breakdownAssignment } = require("../services/breakdown");
+const { breakdownAssignment } = require("../../server/services/breakdown");
 
 module.exports = async (req, res) => {
   try {
