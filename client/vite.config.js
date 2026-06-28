@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import playwright from 'playwright'
 
 export default defineConfig({
   plugins: [
@@ -20,7 +19,6 @@ export default defineConfig({
   test: {
     browser: {
       enabled: true,
-      provider: playwright(),
       instances: [{browser: 'chromium'}]
     }
   }
