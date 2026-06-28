@@ -1,0 +1,3 @@
+packages:
+  - 'client'
+  - 'api' # add any other folders you have, if applicable
