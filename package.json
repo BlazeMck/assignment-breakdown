@@ -3,7 +3,8 @@
   "private": true,
   "workspaces": [
     "client",
-    "server"
+    "server",
+    "api"
   ],
   "scripts": {
     "start": "npm run dev",
