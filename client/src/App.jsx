@@ -28,7 +28,6 @@ export default function App() {
     
                     {/* Core Assignment Utilities */}
                     <Route path="/submit" element={<SubmitAssignment />} />
-                    <Route path="/view" element={<ViewAssignments />} />
                     
                     {/* Empty or broken assignment paths before they can crash the view */}
                     <Route path="/assignments" element={<Navigate to="/" replace />} />

@@ -2,5 +2,5 @@ packages:
   - 'client'
   - 'api' # add any other folders you have, if applicable
 allowBuilds:
-  '@firebase/util': set this to true or false
-  protobufjs: set this to true or false
+  '@firebase/util': true
+  protobufjs: true
