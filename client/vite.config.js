@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import playwright from 'playwright'
 
 export default defineConfig({
   plugins: [
