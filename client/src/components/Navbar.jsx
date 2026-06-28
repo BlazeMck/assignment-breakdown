@@ -57,6 +57,7 @@ export default function Navbar() {
                 {user ? (
                     <>
                         <Link to="/submit" style={styles.link}>Submit Assignment</Link>
+                        <Link to="/view" style={styles.link}>View Assignments</Link>
                         <button onClick={logout} style={styles.dangerButton}>Sign Out</button>
                     </>
                 ) : (

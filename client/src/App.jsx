@@ -6,6 +6,7 @@ import Welcome from "./pages/Welcome";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import SubmitAssignment from "./pages/SubmitAssignment";
+import ViewAssignments from "./pages/ViewAssignments"
 import AssignmentView from "./pages/AssignmentView";
 import Dashboard from "./pages/Dashboard";
 
@@ -27,6 +28,7 @@ export default function App() {
     
                     {/* Core Assignment Utilities */}
                     <Route path="/submit" element={<SubmitAssignment />} />
+                    <Route path="/view" element={<ViewAssignments />} />
                     
                     {/* Empty or broken assignment paths before they can crash the view */}
                     <Route path="/assignments" element={<Navigate to="/" replace />} />
