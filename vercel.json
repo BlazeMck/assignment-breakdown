@@ -2,6 +2,18 @@
   "cleanUrls": true,
   "rewrites": [
     {
+      "source": "/api/assignments/:assignmentId",
+      "destination": "/api/assignments/[assignmentId].js"
+    },
+    {
+      "source": "/api/assignments/:assignmentId/tasks",
+      "destination": "/api/assignments/[assignmentId]/tasks/index.js"
+    },
+    {
+      "source": "/api/assignments/:assignmentId/tasks/:taskId",
+      "destination": "/api/assignments/[assignmentId]/tasks/[taskId].js"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/:path*"
     },
