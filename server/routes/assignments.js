@@ -88,32 +88,39 @@ router.get("/", async (req, res, next) => {
 
 /**
  * GET /api/assignments/:id
- * Retrieves a single assignment by its unique ID
+ * Retrieves a single assignment by its unique ID along with its nested tasks
  */
 router.get("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const { data, error } = await supabase
+    const { data: assignment, error: assignmentError } = await supabase
       .from("assignments")
       .select("*")
       .eq("id", id)
       .maybeSingle();
 
-    if (error) {
-      throw error;
-    }
+    if (assignmentError) throw assignmentError;
 
-    // Handle non-existent resource
-    if (!data) {
+    if (!assignment) {
       const err = new Error("Assignment not found");
       err.status = 404;
       throw err;
     }
 
+    const { data: tasks, error: tasksError } = await supabase
+      .from("tasks")
+      .select("*")
+      .eq("assignment_id", id);
+
+    if (tasksError) throw tasksError;
+
     res.status(200).json({
       success: true,
-      data,
+      data: {
+        ...assignment,
+        tasks: tasks || []
+      },
     });
   } catch (error) {
     next(error);

@@ -11,12 +11,12 @@ const { breakdownAssignment } = require("../services/breakdown");
  *
  * user_id is the Firebase Authentication UID of the logged-in user.
  *
- * Request body:  { user_id: string, raw_text: string, due_date: ISO date }
+ * Request body:  { user_id: string, raw_text: string, due_date: ISO date, existing_assignment_id?: string }
  * Response body: { success: true, data: { assignment, tasks } }
  */
 router.post("/", async (req, res, next) => {
   try {
-    const { user_id, raw_text, due_date } = req.body || {};
+    const { user_id, raw_text, due_date, existing_assignment_id } = req.body || {};
 
     // user_id is the Firebase UID (a non-empty string), not a DB uuid.
     if (typeof user_id !== "string" || !user_id.trim()) {
@@ -43,27 +43,54 @@ router.post("/", async (req, res, next) => {
       dueDate: due_date,
     });
 
-    // 2. Persist the assignment.
-    const assignmentData = {
-      id: randomUUID(),
-      user_id,
-      raw_text: raw_text.trim(),
-      title: breakdown.title,
-      due_date,
-    };
+    let assignment;
 
-    const { data: assignmentRows, error: assignmentError } = await supabase
-      .from("assignments")
-      .insert([assignmentData])
-      .select();
+    // 2. Persist or update the assignment.
+    if (existing_assignment_id) {
+      // OVERWRITE EXISTING: Update core details
+      const { data: updatedRows, error: updateError } = await supabase
+        .from("assignments")
+        .update({ 
+          title: breakdown.title, 
+          raw_text: raw_text.trim(), 
+          due_date 
+        })
+        .eq("id", existing_assignment_id)
+        .select();
 
-    if (assignmentError) {
-      throw assignmentError;
+      if (updateError) {
+        throw updateError;
+      }
+      assignment = updatedRows[0];
+
+      const { error: deleteError } = await supabase
+        .from("tasks")
+        .delete()
+        .eq("assignment_id", existing_assignment_id);
+        
+      if (deleteError) {
+        throw deleteError;
+      }
+    } else {
+      const assignmentData = {
+        id: randomUUID(),
+        user_id,
+        raw_text: raw_text.trim(),
+        title: breakdown.title,
+        due_date,
+      };
+
+      const { data: assignmentRows, error: assignmentError } = await supabase
+        .from("assignments")
+        .insert([assignmentData])
+        .select();
+
+      if (assignmentError) {
+        throw assignmentError;
+      }
+      assignment = assignmentRows[0];
     }
 
-    const assignment = assignmentRows[0];
-
-    // 3. Persist the tasks, each linked to the new assignment.
     const taskRows = breakdown.tasks.map((task) => ({
       id: randomUUID(),
       assignment_id: assignment.id,
