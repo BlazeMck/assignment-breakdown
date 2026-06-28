@@ -1,11 +1,6 @@
 {
   "buildCommand": "npm run build && npm run build:api",
   "outputDirectory": "client/dist",
-  "env": {
-    "SUPABASE_URL": "@SUPABASE_URL",
-    "SUPABASE_ANON_KEY": "@SUPABASE_ANON_KEY",
-    "OPENAI_API_KEY": "@OPENAI_API_KEY"
-  },
   "functions": {
     "api/**/*.js": {
       "memory": 1024,
