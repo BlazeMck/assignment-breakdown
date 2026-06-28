@@ -18,7 +18,9 @@
     "test": "npm run test:server",
     "test:client": "npm run client:test",
     "test:server": "npm run server:test",
-    "test:watch": "npm run test:watch --workspace=server"
+    "test:watch": "npm run test:watch --workspace=server",
+    "build": "npm run client:build",
+    "build:api": "echo 'Vercel serverless functions ready'"
   },
   "devDependencies": {
     "concurrently": "^9.0.0"

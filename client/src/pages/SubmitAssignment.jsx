@@ -25,9 +25,17 @@ export default function SubmitAssignment() {
   });
 
   useEffect(() => {
-    document.body.style.backgroundColor = isLightMode ? '#fdf6e3' : '#0a0a0a';
-    document.body.style.transition = 'background-color 0.3s ease';
-  }, [isLightMode]);
+    const syncTheme = () => {
+      const saved = localStorage.getItem('theme');
+      const newMode = saved ? saved === 'light' : true;
+      setIsLightMode(newMode);
+      document.body.style.backgroundColor = newMode ? '#fdf6e3' : '#0a0a0a';
+      document.body.style.transition = 'background-color 0.3s ease';
+    };
+    syncTheme();
+    window.addEventListener('themeChanged', syncTheme);
+    return () => window.removeEventListener('themeChanged', syncTheme);
+  }, []);
 
   // Fetch existing assignments on mount to enforce the 5-assignment limit
   useEffect(() => {
@@ -120,8 +128,8 @@ export default function SubmitAssignment() {
         <div style={styles.headerActions}>
           <button style={styles.themeToggleBtn} onClick={() => {
             const newMode = !isLightMode;
-            setIsLightMode(newMode);
             localStorage.setItem('theme', newMode ? 'light' : 'dark');
+            window.dispatchEvent(new Event('themeChanged'));
           }} type="button">
             {isLightMode ? '☾ Dark' : '☀ Light'}
           </button>

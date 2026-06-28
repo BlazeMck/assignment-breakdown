@@ -37,7 +37,7 @@ export default function App() {
                     
                     {/* Global fallback safety net */}
                     <Route path="*" element={<Navigate to="/" replace />} />
-</Routes>
+                </Routes>
             </BrowserRouter>
         </AuthProvider>
     );

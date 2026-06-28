@@ -69,14 +69,25 @@ export async function getUserBreakdowns(userId) {
  * @returns {Promise<{ assignment: object, tasks: Array<object> }>}
  */
 export async function getAssignmentDetails(assignmentId) {
+  let response;
   try {
-    const response = await fetch(`/api/assignments/${assignmentId}`);
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message || "Failed to fetch assignment details.");
-    return data;
-  } catch (error) {
-    throw new Error(error.message || "Could not reach the server.");
+    response = await fetch(`/api/assignments/${assignmentId}`);
+  } catch {
+    throw new Error("Could not reach the server. Is the backend running?");
   }
+
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    data = {};
+  }
+
+  if (!response.ok) {
+    throw new Error(data.message || data.error || "Failed to fetch assignment details.");
+  }
+
+  return data;
 }
 
 /**
@@ -87,18 +98,29 @@ export async function getAssignmentDetails(assignmentId) {
  * @param {string} status - e.g., 'completed' or 'pending'
  */
 export async function updateTaskStatus(assignmentId, taskId, status) {
+  let response;
   try {
-    const response = await fetch(`/api/assignments/${assignmentId}/tasks/${taskId}`, {
+    response = await fetch(`/api/assignments/${assignmentId}/tasks/${taskId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message || "Failed to update task.");
-    return data.data;
-  } catch (error) {
-    throw new Error(error.message || "Could not update task status.");
+  } catch {
+    throw new Error("Could not reach the server. Is the backend running?");
   }
+
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    data = {};
+  }
+
+  if (!response.ok) {
+    throw new Error(data.message || data.error || "Failed to update task status.");
+  }
+
+  return data.data;
 }
 
 /**
@@ -107,14 +129,25 @@ export async function updateTaskStatus(assignmentId, taskId, status) {
  * @param {string} assignmentId 
  */
 export async function deleteAssignment(assignmentId) {
+  let response;
   try {
-    const response = await fetch(`/api/assignments/${assignmentId}`, {
+    response = await fetch(`/api/assignments/${assignmentId}`, {
       method: "DELETE",
     });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message || "Failed to delete assignment.");
-    return data;
-  } catch (error) {
-    throw new Error(error.message || "Could not complete delete operation.");
+  } catch {
+    throw new Error("Could not reach the server. Is the backend running?");
   }
+
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    data = {};
+  }
+
+  if (!response.ok) {
+    throw new Error(data.message || data.error || "Failed to delete assignment.");
+  }
+
+  return data;
 }
