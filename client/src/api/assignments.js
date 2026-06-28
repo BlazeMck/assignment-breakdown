@@ -61,3 +61,60 @@ export async function getUserBreakdowns(userId) {
 
   return data.data;
 }
+
+/**
+ * Fetch a single assignment by ID with its nested tasks.
+ * 
+ * @param {string} assignmentId 
+ * @returns {Promise<{ assignment: object, tasks: Array<object> }>}
+ */
+export async function getAssignmentDetails(assignmentId) {
+  try {
+    const response = await fetch(`/api/assignments/${assignmentId}`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Failed to fetch assignment details.");
+    return data;
+  } catch (error) {
+    throw new Error(error.message || "Could not reach the server.");
+  }
+}
+
+/**
+ * Toggle or update a task's status on the backend.
+ * Assuming there is a task router or assignment sub-router handling individual tasks.
+ * 
+ * @param {string} taskId 
+ * @param {string} status - e.g., 'completed' or 'pending'
+ */
+export async function updateTaskStatus(assignmentId, taskId, status) {
+  try {
+    const response = await fetch(`/api/assignments/${assignmentId}/tasks/${taskId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Failed to update task.");
+    return data.data;
+  } catch (error) {
+    throw new Error(error.message || "Could not update task status.");
+  }
+}
+
+/**
+ * Delete a single assignment by ID with its nested tasks.
+ * 
+ * @param {string} assignmentId 
+ */
+export async function deleteAssignment(assignmentId) {
+  try {
+    const response = await fetch(`/api/assignments/${assignmentId}`, {
+      method: "DELETE",
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Failed to delete assignment.");
+    return data;
+  } catch (error) {
+    throw new Error(error.message || "Could not complete delete operation.");
+  }
+}

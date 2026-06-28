@@ -1,18 +1,28 @@
-export default function Button({ 
-        type="button", 
-        children, 
-        onClick, 
-        disabled, 
-        className = "" 
-}) {
+import React from 'react';
+
+export default function Button({ type, children, disabled, name, isLightMode = true }) {
     return (
-        <button 
+        <button
             type={type}
-            onClick={onClick}
             disabled={disabled}
-            className={"rounded-md bg-blue-500 text-white p-2 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:bg-gray-400 disabled:cursor-not-allowed " + className}
+            name={name}
+            style={{
+                width: '100%',
+                padding: '14px',
+                backgroundColor: disabled ? '#4b5563' : '#6366f1',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '15px',
+                fontWeight: '600',
+                fontFamily: 'Inter, system-ui, sans-serif',
+                cursor: disabled ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: !disabled ? '0 4px 6px -1px rgba(99, 102, 241, 0.3)' : 'none',
+                marginTop: '8px'
+            }}
         >
             {children}
         </button>
-    )
+    );
 }
