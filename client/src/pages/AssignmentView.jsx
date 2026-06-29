@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getAssignmentDetails, updateTaskStatus, createBreakdown, deleteAssignment } from '../api/assignments';
 
@@ -32,7 +32,8 @@ const getSortVal = (p) => {
 };
 
 export default function AssignmentView() {
-  const { id } = useParams();
+  const urlParams = new URLSearchParams(window.location.search)
+  const id = urlParams.get('id') === 'demo' ? '' : urlParams.get('id')
   const navigate = useNavigate();
   const { user } = useAuth();
   

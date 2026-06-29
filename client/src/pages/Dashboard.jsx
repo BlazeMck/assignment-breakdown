@@ -287,13 +287,13 @@ export default function Dashboard() {
           <button style={styles.viewToggleBtn} onClick={() => setViewMode(viewMode === "grid" ? "calendar" : "grid")}>
             {viewMode === "grid" ? "📅 Calendar View" : "🗂 Grid View"}
           </button>
-          <button style={styles.themeToggleBtn} onClick={() => {
+          {/* <button style={styles.themeToggleBtn} onClick={() => {
             const newMode = !isLightMode;
             localStorage.setItem('theme', newMode ? 'light' : 'dark');
             window.dispatchEvent(new Event('themeChanged'));
             }}>
             {isLightMode ? '☾ Dark' : '☀ Light'}
-            </button>
+            </button> */}
           <button style={styles.addBtn} onClick={() => navigate('/submit')}>
             + Add assignment
           </button>
@@ -329,7 +329,7 @@ export default function Dashboard() {
              const isDemo = project.id === "demo";
 
              return (
-              <div key={project.id} style={styles.card} onClick={() => navigate(`/assignments/${project.id}`)}>
+              <div key={project.id} style={styles.card} onClick={() => navigate(`/assignments?id=${project.id}`)}>
                 <div style={styles.cardHeader}>
                   <span style={styles.dateBadge}>Due {displayDate}</span>
                   {isDemo ? (

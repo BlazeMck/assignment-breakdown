@@ -29,12 +29,12 @@ export default function App() {
                     {/* Core Assignment Utilities */}
                     <Route path="/submit" element={<SubmitAssignment />} />
                     
-                    {/* Empty or broken assignment paths before they can crash the view */}
+                    {/* Empty or broken assignment paths before they can crash the view
                     <Route path="/assignments" element={<Navigate to="/" replace />} />
-                    <Route path="/assignments/" element={<Navigate to="/" replace />} />
+                    <Route path="/assignments/" element={<Navigate to="/" replace />} /> */}
                     
                     {/* This route stays safe for valid IDs */}
-                    <Route path="/assignments/:id" element={<AssignmentView />} />
+                    <Route path="/assignments" element={<AssignmentView />} />
                     <Route path="/view" element={<ViewAssignments />} />
                     
                     {/* Global fallback safety net */}
