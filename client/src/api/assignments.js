@@ -71,7 +71,7 @@ export async function getUserBreakdowns(userId) {
 export async function getAssignmentDetails(assignmentId) {
   let response;
   try {
-    response = await fetch(`/api/assignments/${assignmentId}/`);
+    response = await fetch(`/api/assignments/${assignmentId}/index`);
   } catch {
     throw new Error("Could not reach the server. Is the backend running?");
   }
@@ -100,7 +100,7 @@ export async function getAssignmentDetails(assignmentId) {
 export async function updateTaskStatus(assignmentId, taskId, status) {
   let response;
   try {
-    response = await fetch(`/api/tasks/${taskId}/`, {
+    response = await fetch(`/api/tasks/${taskId}/index`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
@@ -131,7 +131,7 @@ export async function updateTaskStatus(assignmentId, taskId, status) {
 export async function deleteAssignment(assignmentId) {
   let response;
   try {
-    response = await fetch(`/api/assignments/${assignmentId}/`, {
+    response = await fetch(`/api/assignments/${assignmentId}/index`, {
       method: "DELETE",
     });
   } catch {
