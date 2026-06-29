@@ -329,7 +329,7 @@ export default function Dashboard() {
              const isDemo = project.id === "demo";
 
              return (
-              <div key={project.id} style={styles.card} onClick={() => navigate(`/assignments?id=${project.id}`)}>
+              <div key={project.id} style={styles.card} onClick={() => navigate(`/assignments/${project.id}`)}>
                 <div style={styles.cardHeader}>
                   <span style={styles.dateBadge}>Due {displayDate}</span>
                   {isDemo ? (
