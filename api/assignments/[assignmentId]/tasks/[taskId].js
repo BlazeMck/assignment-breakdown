@@ -1,5 +1,5 @@
-const supabase = require("../lib/database");
-const { validateTaskUpdate, validateUuid } = require("../lib/validators");
+const supabase = require("../../../lib/database");
+const { validateTaskUpdate, validateUuid } = require("../../../lib/validators");
 
 async function getTaskOrFail(taskId, assignmentId) {
   const { data, error } = await supabase
