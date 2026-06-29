@@ -1,5 +1,5 @@
-const supabase = require("../../lib/database");
-const { validateAssignmentUpdate, validateUuid } = require("../../lib/validators");
+const supabase = require("../lib/database");
+const { validateAssignmentUpdate, validateUuid } = require("../lib/validators");
 
 module.exports = async (req, res) => {
   try {

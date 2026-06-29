@@ -100,7 +100,7 @@ export async function getAssignmentDetails(assignmentId) {
 export async function updateTaskStatus(assignmentId, taskId, status) {
   let response;
   try {
-    response = await fetch(`/api/assignments/${assignmentId}/tasks/${taskId}`, {
+    response = await fetch(`/api/tasks/${taskId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),

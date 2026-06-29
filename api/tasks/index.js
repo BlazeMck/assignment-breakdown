@@ -1,6 +1,6 @@
 const { randomUUID } = require("crypto");
-const supabase = require("../../../lib/database");
-const { validateTask, validateUuid } = require("../../../lib/validators");
+const supabase = require("../lib/database");
+const { validateTask, validateUuid } = require("../lib/validators");
 
 async function getAssignmentOrFail(assignmentId) {
   const { data, error } = await supabase
