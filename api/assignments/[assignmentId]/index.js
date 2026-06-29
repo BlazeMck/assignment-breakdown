@@ -1,5 +1,5 @@
-const supabase = require("../lib/database");
-const { validateAssignmentUpdate, validateUuid } = require("../lib/validators");
+const supabase = require("../../lib/database");
+const { validateAssignmentUpdate, validateUuid } = require("../../lib/validators");
 
 module.exports = async (req, res) => {
   try {
@@ -17,7 +17,7 @@ module.exports = async (req, res) => {
     if (req.method === "GET") {
       const { data, error } = await supabase
         .from("assignments")
-        .select("*")
+        .select("*, tasks(*)")
         .eq("id", assignmentId)
         .maybeSingle();
 

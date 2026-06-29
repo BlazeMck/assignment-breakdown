@@ -75,6 +75,9 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
+    if (!user) {
+      navigate("/welcome")
+    }
     loadProjects();
   }, [user]);
 
@@ -287,13 +290,13 @@ export default function Dashboard() {
           <button style={styles.viewToggleBtn} onClick={() => setViewMode(viewMode === "grid" ? "calendar" : "grid")}>
             {viewMode === "grid" ? "📅 Calendar View" : "🗂 Grid View"}
           </button>
-          <button style={styles.themeToggleBtn} onClick={() => {
+          {/* <button style={styles.themeToggleBtn} onClick={() => {
             const newMode = !isLightMode;
             localStorage.setItem('theme', newMode ? 'light' : 'dark');
             window.dispatchEvent(new Event('themeChanged'));
             }}>
             {isLightMode ? '☾ Dark' : '☀ Light'}
-            </button>
+            </button> */}
           <button style={styles.addBtn} onClick={() => navigate('/submit')}>
             + Add assignment
           </button>
