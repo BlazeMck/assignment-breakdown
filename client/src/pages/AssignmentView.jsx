@@ -269,7 +269,12 @@ export default function AssignmentView() {
                 🗑 Delete Assignment
               </button>
             )}
-            <button style={styles.purpleButton} onClick={handleRegenerate} disabled={loading || (!isDemo && !!errorMessage)}>
+            <button 
+              style={styles.purpleButton} 
+              onClick={handleRegenerate} 
+              // disabled={loading || (!isDemo && !!errorMessage)}
+              disabled={true}
+            >
               {loading ? 'Processing...' : hasGenerated ? '⟳ Regenerate' : '↻ Generate tasks'}
             </button>
           </div>
