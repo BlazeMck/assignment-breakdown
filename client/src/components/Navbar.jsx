@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom"; 
+import { Link, useNavigate } from "react-router-dom"; 
 import { useAuth } from "../context/AuthContext";
 import { getUserBreakdowns } from "../api/assignments";
 
 export default function Navbar() {
     const { user, logout } = useAuth();
+
+    const navigate = useNavigate()
 
     const [isLightMode, setIsLightMode] = useState(() => {
         const saved = localStorage.getItem('theme');
@@ -42,6 +44,11 @@ export default function Navbar() {
             })
             .catch((err) => console.error("Failed to load user breakdowns:", err));
     }, [user?.uuid]);
+
+    const handleLogout = () => {
+        logout()
+        navigate("/")
+    }
 
     const styles = getStyles(isLightMode);
 
