@@ -34,7 +34,7 @@ export default function Dashboard() {
     const saved = localStorage.getItem('theme');
     return saved ? saved === 'light' : true;
   });
-  const [viewMode, setViewMode] = useState('calendar');
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('dashboardViewMode') || 'calendar');
   const [projectToDelete, setProjectToDelete] = useState(null);
   
   const [displayDate, setDisplayDate] = useState(new Date());
@@ -287,7 +287,7 @@ export default function Dashboard() {
           <p style={styles.subText}>Track and manage your upcoming assignments.</p>
         </div>
         <div style={styles.headerActions}>
-          <button style={styles.viewToggleBtn} onClick={() => navigate("/view")}>
+          <button style={styles.viewToggleBtn} onClick={() => setViewMode(viewMode === "grid" ? "calendar" : "grid")}>
             {viewMode === "grid" ? "📅 Calendar View" : "🗂 Grid View"}
           </button>
           {/* <button style={styles.themeToggleBtn} onClick={() => {
