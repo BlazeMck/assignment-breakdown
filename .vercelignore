@@ -1,0 +1,8 @@
+server
+.git
+.gitignore
+docker-compose.yml
+supabase
+*.md
+node_modules
+client/node_modules
