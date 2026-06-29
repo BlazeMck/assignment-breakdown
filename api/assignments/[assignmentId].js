@@ -17,7 +17,7 @@ module.exports = async (req, res) => {
     if (req.method === "GET") {
       const { data, error } = await supabase
         .from("assignments")
-        .select("*, tasks(*)")
+        .select("*")
         .eq("id", assignmentId)
         .maybeSingle();
 
