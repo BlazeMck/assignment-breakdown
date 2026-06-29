@@ -1,9 +1,0 @@
-{
-  "cleanUrls": true,
-  "rewrites": [
-    {
-      "source": "/((?!api/).*)",
-      "destination": "/client/dist/$1"
-    }
-  ]
-}
