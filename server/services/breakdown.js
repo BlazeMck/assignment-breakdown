@@ -2,16 +2,13 @@
  * OpenAI assignment breakdown service.
  * Turns raw assignment text + a due date into an ordered list of prioritized tasks.
  */
+require("dotenv").config({ path: __dirname + "/../.env" });
 const OpenAI = require("openai");
 
-const MODEL = "gpt-5-mini";
+const MODEL = "gpt-4o-mini"; // Note: updated to valid model name if gpt-5-mini isn't deployed
 
 let client;
 
-/**
- * Lazily create the OpenAI client so requiring this module doesn't throw
- * when OPENAI_API_KEY is missing (e.g. during tests or local boot).
- */
 function getClient() {
   if (!client) {
     if (!process.env.OPENAI_API_KEY) {
@@ -37,16 +34,12 @@ integer where 1 is done first.
 (quick), 2 = Medium, 3 = High (most time-consuming/involved). Use 3 for the heaviest \
 tasks and 1 for the quickest.
 - "status" must always be the string "pending" for newly created tasks.
+- "suggested_date" must be a string in YYYY-MM-DD format. Distribute the tasks logically \
+between today's date and the assignment's due date. Do not cluster them all on the due date.
 - Derive a short "title" (max ~60 chars) summarizing the whole assignment.
-- Consider the due date when sequencing and estimating, but do not invent dates or \
-calendar entries in the output.
 - Base everything strictly on the assignment text. Do not invent requirements that are \
 not stated or reasonably implied.`;
 
-/**
- * JSON Schema passed to the model via structured outputs so the response is
- * guaranteed to match the shape we persist into the `assignments` / `tasks` tables.
- */
 const RESPONSE_SCHEMA = {
   type: "object",
   additionalProperties: false,
@@ -62,7 +55,7 @@ const RESPONSE_SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["description", "priority", "time_estimate", "status"],
+        required: ["description", "priority", "time_estimate", "status", "suggested_date"],
         properties: {
           description: { type: "string" },
           priority: { type: "integer", minimum: 1 },
@@ -71,6 +64,10 @@ const RESPONSE_SCHEMA = {
             enum: [1, 2, 3],
             description: "Relative effort: 1 = Low, 2 = Medium, 3 = High.",
           },
+          suggested_date: {
+            type: "string",
+            description: "Recommended completion date in YYYY-MM-DD format.",
+          },
           status: { type: "string", enum: ["pending"] },
         },
       },
@@ -78,24 +75,18 @@ const RESPONSE_SCHEMA = {
   },
 };
 
-/**
- * Break an assignment down into prioritized tasks using OpenAI.
- *
- * @param {{ rawText: string, dueDate?: string }} input
- * @returns {Promise<{ title: string, tasks: Array<{description: string, priority: number, time_estimate: 1|2|3, status: string}> }>}
- */
 async function breakdownAssignment({ rawText, dueDate }) {
   if (!rawText || !rawText.trim()) {
     throw new Error("rawText is required to break down an assignment.");
   }
 
+  const today = new Date().toISOString().split('T')[0];
   const userContent = [
     `Assignment text:\n${rawText.trim()}`,
-    dueDate ? `Due date: ${dueDate}` : "Due date: not provided",
+    `Due date: ${dueDate || 'not provided'}`,
+    `Today's date: ${today}`,
   ].join("\n\n");
 
-  // Note: the gpt-5 family only supports the default temperature (1),
-  // so we don't pass a custom temperature here.
   const completion = await getClient().chat.completions.create({
     model: MODEL,
     messages: [
@@ -119,8 +110,6 @@ async function breakdownAssignment({ rawText, dueDate }) {
 
   const parsed = JSON.parse(raw);
 
-  // Normalize priority ordering defensively: sort by the model's priority,
-  // then re-number 1..n so the sequence is always contiguous.
   const tasks = [...parsed.tasks]
     .sort((a, b) => a.priority - b.priority)
     .map((task, index) => ({ ...task, priority: index + 1 }));
