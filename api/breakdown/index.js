@@ -36,22 +36,60 @@ module.exports = async (req, res) => {
         dueDate: due_date,
       });
 
-      const assignmentData = {
-        id: randomUUID(),
-        user_id,
-        raw_text: raw_text.trim(),
-        title: breakdown.title,
-        due_date,
-      };
+      // Support regenerating an existing assignment by updating it and
+      // replacing its tasks when `existing_assignment_id` is provided.
+      const { existing_assignment_id } = req.body || {};
 
-      const { data: assignmentRows, error: assignmentError } = await supabase
-        .from("assignments")
-        .insert([assignmentData])
-        .select();
+      console.log("[api/breakdown] POST body:", { user_id, raw_text: raw_text && String(raw_text).slice(0,200), due_date, existing_assignment_id });
 
-      if (assignmentError) throw assignmentError;
+      let assignment;
 
-      const assignment = assignmentRows[0];
+      if (existing_assignment_id) {
+        console.log(`[api/breakdown] existing_assignment_id provided: ${existing_assignment_id}`);
+
+        const { data: updatedRows, error: updateError } = await supabase
+          .from("assignments")
+          .update({
+            title: breakdown.title,
+            raw_text: raw_text.trim(),
+            due_date,
+          })
+          .eq("id", existing_assignment_id)
+          .select();
+
+        if (updateError) throw updateError;
+
+        if (!updatedRows || updatedRows.length === 0) {
+          return res.status(404).json({ success: false, error: "Not Found", message: `Existing assignment not found: ${existing_assignment_id}` });
+        }
+
+        assignment = updatedRows[0];
+
+        const { error: deleteError } = await supabase
+          .from("tasks")
+          .delete()
+          .eq("assignment_id", existing_assignment_id);
+
+        if (deleteError) throw deleteError;
+
+      } else {
+        const assignmentData = {
+          id: randomUUID(),
+          user_id,
+          raw_text: raw_text.trim(),
+          title: breakdown.title,
+          due_date,
+        };
+
+        const { data: assignmentRows, error: assignmentError } = await supabase
+          .from("assignments")
+          .insert([assignmentData])
+          .select();
+
+        if (assignmentError) throw assignmentError;
+
+        assignment = assignmentRows[0];
+      }
 
       const taskRows = breakdown.tasks.map((task) => ({
         id: randomUUID(),
