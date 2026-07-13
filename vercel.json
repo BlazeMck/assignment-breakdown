@@ -2,8 +2,24 @@
   "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/((?!api/).*)",
-      "destination": "/client/dist/$1"
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    },
+    {
+      "source": "/assets/:path*",
+      "destination": "/client/dist/assets/:path*"
+    },
+    {
+      "source": "/favicon.svg",
+      "destination": "/client/dist/favicon.svg"
+    },
+    {
+      "source": "/icons.svg",
+      "destination": "/client/dist/icons.svg"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/client/dist/index.html"
     }
   ]
 }
