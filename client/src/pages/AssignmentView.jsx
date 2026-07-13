@@ -193,7 +193,19 @@ export default function AssignmentView() {
   };
 
   const sortedTasks = useMemo(() => {
-    return [...tasks].sort((a, b) => getSortVal(a.priority) - getSortVal(b.priority));
+    return [...tasks].sort((a, b) => {
+      const aDateRaw = a.suggested_date || a.due_date || null;
+      const bDateRaw = b.suggested_date || b.due_date || null;
+      const aDate = aDateRaw ? new Date(aDateRaw) : null;
+      const bDate = bDateRaw ? new Date(bDateRaw) : null;
+
+      if (aDate && bDate) return aDate - bDate;
+      if (aDate && !bDate) return -1;
+      if (!aDate && bDate) return 1;
+
+      // fallback to priority ordering when no dates are present
+      return getSortVal(a.priority) - getSortVal(b.priority);
+    });
   }, [tasks]);
 
   const displayTitle = toTitleCase(assignment.title);
@@ -272,8 +284,7 @@ export default function AssignmentView() {
             <button 
               style={styles.purpleButton} 
               onClick={handleRegenerate} 
-              // disabled={loading || (!isDemo && !!errorMessage)}
-              disabled={true}
+              disabled={loading || (!isDemo && !!errorMessage)}
             >
               {loading ? 'Processing...' : hasGenerated ? '⟳ Regenerate' : '↻ Generate tasks'}
             </button>
