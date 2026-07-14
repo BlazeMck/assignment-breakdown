@@ -33,6 +33,8 @@
     "vitest": "^4.1.9"
   },
   "optionalDependencies": {
-    "@rolldown/binding-darwin-arm64": "^1.1.3"
+    "@rolldown/binding-darwin-arm64": "^1.1.3",
+    "@rolldown/binding-win32-x64-msvc": "^1.1.5",
+    "lightningcss-win32-x64-msvc": "^1.32.0"
   }
 }
