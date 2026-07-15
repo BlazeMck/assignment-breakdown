@@ -6,6 +6,7 @@ import Welcome from "./pages/Welcome";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import SubmitAssignment from "./pages/SubmitAssignment";
+import ViewAssignments from "./pages/ViewAssignments"
 import AssignmentView from "./pages/AssignmentView";
 import Dashboard from "./pages/Dashboard";
 
@@ -34,6 +35,7 @@ export default function App() {
                     
                     {/* This route stays safe for valid IDs */}
                     <Route path="/assignments/:id" element={<AssignmentView />} />
+                    <Route path="/view" element={<ViewAssignments />} />
                     
                     {/* Global fallback safety net */}
                     <Route path="*" element={<Navigate to="/" replace />} />

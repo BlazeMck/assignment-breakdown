@@ -1,7 +1,7 @@
 const { randomUUID } = require("crypto");
 const supabase = require("../lib/database");
-const { breakdownAssignment } = require("../../server/services/breakdown");
-const { detectDependencies } = require("../../server/services/dependencies");
+const { breakdownAssignment } = require("../services/breakdown");
+const { detectDependencies } = require("../services/dependencies");
 
 module.exports = async (req, res) => {
   try {
