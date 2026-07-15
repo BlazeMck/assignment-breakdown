@@ -1,11 +1,12 @@
 import React from 'react';
 
-export default function Button({ type, children, disabled, name, isLightMode = true }) {
+export default function Button({ type, children, disabled, name, isLightMode = true, onClick }) {
     return (
         <button
             type={type}
             disabled={disabled}
             name={name}
+            onClick={onClick}
             style={{
                 width: '100%',
                 padding: '14px',

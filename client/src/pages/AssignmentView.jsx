@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getAssignmentDetails, updateTaskStatus, createBreakdown, deleteAssignment } from '../api/assignments';
@@ -22,7 +22,6 @@ function shuffleDemoTasks() {
   }));
 }
 
-// Universal helper for sorting
 const getSortVal = (p) => {
   const pStr = String(p).toLowerCase();
   if (pStr === '3' || pStr === 'high') return 3;
@@ -32,16 +31,22 @@ const getSortVal = (p) => {
 };
 
 export default function AssignmentView() {
-  const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   
+  // Robust ID parsing: checks path parameters AND query strings simultaneously
+  const { id: pathId } = useParams();
+  const urlParams = new URLSearchParams(window.location.search);
+  const queryId = urlParams.get('id');
+  
+  const id = pathId || queryId;
   const isDemo = id === 'demo' || !id;
 
+  // State Management
   const [assignment, setAssignment] = useState({ title: "Loading Assignment...", raw_text: "", due_date: "" });
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [hasGenerated, setHasGenerated] = useState(false); 
+  const [savingTaskIds, setSavingTaskIds] = useState(new Set());
   const [isLightMode, setIsLightMode] = useState(() => {
     const saved = localStorage.getItem('theme');
     return saved ? saved === 'light' : true;
@@ -54,6 +59,7 @@ export default function AssignmentView() {
     document.body.style.transition = 'background-color 0.3s ease';
   }, [isLightMode]);
 
+  // Data Hydration Lifecycle
   useEffect(() => {
     if (isDemo) {
       setAssignment({ title: "Example: The Industrial Revolution", raw_text: "Analyze the industrial revolution.", due_date: "2026-06-24" });
@@ -68,37 +74,38 @@ export default function AssignmentView() {
           { id: "3", description: "Draft conclusion", priority: 3, status: "completed" }
         ]);
       }
-
-      setHasGenerated(true);
       return;
     }
 
-    async function fetchRealData() {
-      try {
-        setErrorMessage(null);
-        const payload = await getAssignmentDetails(id);
-        if (!payload) throw new Error("Server returned an empty response payload.");
+    setErrorMessage(null);
+    setLoading(true);
 
+    getAssignmentDetails(id)
+      .then((payload) => {
+        if (!payload) throw new Error("Server returned an empty response payload.");
         const coreData = payload.data || payload; 
+
         if (coreData && typeof coreData === 'object') {
           setAssignment({
             title: coreData.title || "Untitled Assignment",
             raw_text: coreData.raw_text || "No description text provided.",
             due_date: coreData.due_date || ""
           });
-          const incomingTasks = coreData.tasks || [];
-          setTasks(incomingTasks);
-          setHasGenerated(incomingTasks.length > 0);
+          setTasks(coreData.tasks || []);
         } else {
           throw new Error("Data wrapper properties are empty or misaligned.");
         }
-      } catch (err) {
+      })
+      .catch((err) => {
         setErrorMessage(err.message || "Failed to parse database records.");
         setAssignment({ title: "Error Loading Data", raw_text: "", due_date: "" });
-      }
-    }
-    fetchRealData();
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [id, isDemo]);
+
+  const hasGenerated = useMemo(() => tasks.length > 0, [tasks]);
 
   const handleToggleTask = async (taskId, currentStatus) => {
     const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
@@ -112,12 +119,20 @@ export default function AssignmentView() {
       return;
     }
 
+    setSavingTaskIds((current) => new Set(current).add(taskId));
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+    
     try {
       await updateTaskStatus(id, taskId, newStatus); 
     } catch (err) {
       setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: currentStatus } : t));
-      alert(err.message || "Failed to sync task with server.");
+      setErrorMessage(err.message || "Failed to sync task with server.");
+    } finally {
+      setSavingTaskIds((current) => {
+        const next = new Set(current);
+        next.delete(taskId);
+        return next;
+      });
     }
   };
 
@@ -128,7 +143,6 @@ export default function AssignmentView() {
       await new Promise((r) => setTimeout(r, 600));
       const newTasks = shuffleDemoTasks();
       setTasks(newTasks);
-      setHasGenerated(true);
       localStorage.setItem('demoDashboardTasks', JSON.stringify(newTasks));
       setLoading(false);
       return;
@@ -178,8 +192,9 @@ export default function AssignmentView() {
     return date.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'long', day: 'numeric', year: 'numeric' });
   };
 
-  // Robust sorting: 1 (Low) on top, 3 (High) on bottom
-  const sortedTasks = [...tasks].sort((a, b) => getSortVal(a.priority) - getSortVal(b.priority));
+  const sortedTasks = useMemo(() => {
+    return [...tasks].sort((a, b) => getSortVal(a.priority) - getSortVal(b.priority));
+  }, [tasks]);
 
   const displayTitle = toTitleCase(assignment.title);
   const displayDate = formatDate(assignment.due_date);
@@ -222,7 +237,7 @@ export default function AssignmentView() {
             window.dispatchEvent(new Event('themeChanged'));
             }}>
             {isLightMode ? '☾ Dark' : '☀ Light'}
-            </button>
+          </button>
           <button style={styles.addAssignmentBtn} onClick={() => navigate('/submit')}>
             + Add assignment
           </button>
@@ -254,7 +269,12 @@ export default function AssignmentView() {
                 🗑 Delete Assignment
               </button>
             )}
-            <button style={styles.purpleButton} onClick={handleRegenerate} disabled={loading || (!isDemo && !!errorMessage)}>
+            <button 
+              style={styles.purpleButton} 
+              onClick={handleRegenerate} 
+              // disabled={loading || (!isDemo && !!errorMessage)}
+              disabled={true}
+            >
               {loading ? 'Processing...' : hasGenerated ? '⟳ Regenerate' : '↻ Generate tasks'}
             </button>
           </div>
@@ -277,7 +297,6 @@ export default function AssignmentView() {
           <div>
             <div style={styles.completionStatusText}>{completedCount} of {totalCount} complete</div>
             <div style={styles.listWrapper}>
-              
               {sortedTasks.map((task) => {
                 const isDone = task.status === 'completed';
                 const pVal = getSortVal(task.priority);
