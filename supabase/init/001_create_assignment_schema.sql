@@ -37,6 +37,8 @@ create table if not exists public.tasks (
   priority integer not null,
   time_estimate integer,
   status text not null,
+  -- Priority numbers of tasks that must be completed before this one.
+  depends_on integer[] not null default '{}',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

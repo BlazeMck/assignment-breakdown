@@ -1,6 +1,7 @@
 const { randomUUID } = require("crypto");
 const supabase = require("../lib/database");
 const { breakdownAssignment } = require("../services/breakdown");
+const { detectDependencies } = require("../services/dependencies");
 
 module.exports = async (req, res) => {
   try {
@@ -36,6 +37,12 @@ module.exports = async (req, res) => {
         dueDate: due_date,
       });
 
+      // Second LLM call: detect which tasks depend on which.
+      const dependencies = await detectDependencies(breakdown.tasks);
+      const dependsOnByPriority = new Map(
+        dependencies.map((entry) => [entry.priority, entry.depends_on]),
+      );
+
       const assignmentData = {
         id: randomUUID(),
         user_id,
@@ -60,6 +67,7 @@ module.exports = async (req, res) => {
         priority: task.priority,
         time_estimate: task.time_estimate,
         status: task.status,
+        depends_on: dependsOnByPriority.get(task.priority) || [],
       }));
 
       const { data: tasks, error: tasksError } = await supabase
