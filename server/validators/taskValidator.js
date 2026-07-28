@@ -9,11 +9,13 @@ const taskStatusValues = ["pending", "in_progress", "completed"];
 
 // time_estimate is a relative effort level stored as an integer:
 // 1 = Low, 2 = Medium, 3 = High. The client maps these back to labels.
+// depends_on holds the priority numbers of prerequisite tasks (empty = none).
 const taskCreateSchema = Joi.object({
   description: Joi.string().trim().min(1).max(1000).required(),
   priority: Joi.number().integer().min(0).required(),
   time_estimate: Joi.number().integer().min(1).max(3).allow(null).optional(),
   status: Joi.string().valid(...taskStatusValues).required(),
+  depends_on: Joi.array().items(Joi.number().integer().min(1)).optional(),
 });
 
 const taskUpdateSchema = Joi.object({
@@ -21,6 +23,7 @@ const taskUpdateSchema = Joi.object({
   priority: Joi.number().integer().min(0),
   time_estimate: Joi.number().integer().min(1).max(3).allow(null),
   status: Joi.string().valid(...taskStatusValues),
+  depends_on: Joi.array().items(Joi.number().integer().min(1)),
 }).min(1);
 
 const validateTask = (data) => taskCreateSchema.validate(data);

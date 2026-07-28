@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getAssignmentDetails, updateTaskStatus, createBreakdown, deleteAssignment } from '../api/assignments';
@@ -22,7 +22,6 @@ function shuffleDemoTasks() {
   }));
 }
 
-// Universal helper for sorting
 const getSortVal = (p) => {
   const pStr = String(p).toLowerCase();
   if (pStr === '3' || pStr === 'high') return 3;
@@ -32,16 +31,22 @@ const getSortVal = (p) => {
 };
 
 export default function AssignmentView() {
-  const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   
+  // Robust ID parsing: checks path parameters AND query strings simultaneously
+  const { id: pathId } = useParams();
+  const urlParams = new URLSearchParams(window.location.search);
+  const queryId = urlParams.get('id');
+  
+  const id = pathId || queryId;
   const isDemo = id === 'demo' || !id;
 
+  // State Management
   const [assignment, setAssignment] = useState({ title: "Loading Assignment...", raw_text: "", due_date: "" });
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [hasGenerated, setHasGenerated] = useState(false); 
+  const [savingTaskIds, setSavingTaskIds] = useState(new Set());
   const [isLightMode, setIsLightMode] = useState(() => {
     const saved = localStorage.getItem('theme');
     return saved ? saved === 'light' : true;
@@ -54,6 +59,7 @@ export default function AssignmentView() {
     document.body.style.transition = 'background-color 0.3s ease';
   }, [isLightMode]);
 
+  // Data Hydration Lifecycle
   useEffect(() => {
     if (isDemo) {
       setAssignment({ title: "Example: The Industrial Revolution", raw_text: "Analyze the industrial revolution.", due_date: "2026-06-24" });
@@ -68,37 +74,38 @@ export default function AssignmentView() {
           { id: "3", description: "Draft conclusion", priority: 3, status: "completed" }
         ]);
       }
-
-      setHasGenerated(true);
       return;
     }
 
-    async function fetchRealData() {
-      try {
-        setErrorMessage(null);
-        const payload = await getAssignmentDetails(id);
-        if (!payload) throw new Error("Server returned an empty response payload.");
+    setErrorMessage(null);
+    setLoading(true);
 
+    getAssignmentDetails(id)
+      .then((payload) => {
+        if (!payload) throw new Error("Server returned an empty response payload.");
         const coreData = payload.data || payload; 
+
         if (coreData && typeof coreData === 'object') {
           setAssignment({
             title: coreData.title || "Untitled Assignment",
             raw_text: coreData.raw_text || "No description text provided.",
             due_date: coreData.due_date || ""
           });
-          const incomingTasks = coreData.tasks || [];
-          setTasks(incomingTasks);
-          setHasGenerated(incomingTasks.length > 0);
+          setTasks(coreData.tasks || []);
         } else {
           throw new Error("Data wrapper properties are empty or misaligned.");
         }
-      } catch (err) {
+      })
+      .catch((err) => {
         setErrorMessage(err.message || "Failed to parse database records.");
         setAssignment({ title: "Error Loading Data", raw_text: "", due_date: "" });
-      }
-    }
-    fetchRealData();
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [id, isDemo]);
+
+  const hasGenerated = useMemo(() => tasks.length > 0, [tasks]);
 
   const handleToggleTask = async (taskId, currentStatus) => {
     const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
@@ -112,12 +119,20 @@ export default function AssignmentView() {
       return;
     }
 
+    setSavingTaskIds((current) => new Set(current).add(taskId));
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+    
     try {
       await updateTaskStatus(id, taskId, newStatus); 
     } catch (err) {
       setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: currentStatus } : t));
-      alert(err.message || "Failed to sync task with server.");
+      setErrorMessage(err.message || "Failed to sync task with server.");
+    } finally {
+      setSavingTaskIds((current) => {
+        const next = new Set(current);
+        next.delete(taskId);
+        return next;
+      });
     }
   };
 
@@ -128,7 +143,6 @@ export default function AssignmentView() {
       await new Promise((r) => setTimeout(r, 600));
       const newTasks = shuffleDemoTasks();
       setTasks(newTasks);
-      setHasGenerated(true);
       localStorage.setItem('demoDashboardTasks', JSON.stringify(newTasks));
       setLoading(false);
       return;
@@ -178,8 +192,9 @@ export default function AssignmentView() {
     return date.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'long', day: 'numeric', year: 'numeric' });
   };
 
-  // Robust sorting: 1 (Low) on top, 3 (High) on bottom
-  const sortedTasks = [...tasks].sort((a, b) => getSortVal(a.priority) - getSortVal(b.priority));
+  // Chronological execution order: priority is the 1-based sequence the AI
+  // produced (task #1 first), and depends_on references these numbers.
+  const sortedTasks = [...tasks].sort((a, b) => (Number(a.priority) || 0) - (Number(b.priority) || 0));
 
   const displayTitle = toTitleCase(assignment.title);
   const displayDate = formatDate(assignment.due_date);
@@ -222,7 +237,7 @@ export default function AssignmentView() {
             window.dispatchEvent(new Event('themeChanged'));
             }}>
             {isLightMode ? '☾ Dark' : '☀ Light'}
-            </button>
+          </button>
           <button style={styles.addAssignmentBtn} onClick={() => navigate('/submit')}>
             + Add assignment
           </button>
@@ -254,7 +269,12 @@ export default function AssignmentView() {
                 🗑 Delete Assignment
               </button>
             )}
-            <button style={styles.purpleButton} onClick={handleRegenerate} disabled={loading || (!isDemo && !!errorMessage)}>
+            <button 
+              style={styles.purpleButton} 
+              onClick={handleRegenerate} 
+              // disabled={loading || (!isDemo && !!errorMessage)}
+              disabled={true}
+            >
               {loading ? 'Processing...' : hasGenerated ? '⟳ Regenerate' : '↻ Generate tasks'}
             </button>
           </div>
@@ -277,25 +297,40 @@ export default function AssignmentView() {
           <div>
             <div style={styles.completionStatusText}>{completedCount} of {totalCount} complete</div>
             <div style={styles.listWrapper}>
-              
               {sortedTasks.map((task) => {
                 const isDone = task.status === 'completed';
-                const pVal = getSortVal(task.priority);
-                const priorityLabel = pVal === 3 ? 'High' : pVal === 2 ? 'Medium' : 'Low';
-                const leftBorderColor = pVal === 3 ? '#6366f1' : pVal === 2 ? '#f59e0b' : '#10b981';
+                // Effort badge reads time_estimate (1 = Low, 2 = Medium, 3 = High);
+                // priority is the task's sequence number, shown as #N below.
+                const eVal = getSortVal(task.time_estimate);
+                const effortLabel = eVal === 3 ? 'High' : eVal === 2 ? 'Medium' : eVal === 1 ? 'Low' : null;
+                const leftBorderColor = eVal === 3 ? '#6366f1' : eVal === 2 ? '#f59e0b' : '#10b981';
                 const taskTextColor = isDone ? (isLightMode ? '#a89f91' : '#525252') : (isLightMode ? '#3b3228' : '#e5e7eb');
                 let pillBg, pillColor;
-                if (pVal === 3) { pillBg = isLightMode ? '#fcdbc4' : '#2d1616'; pillColor = isLightMode ? '#9c2b2e' : '#fca5a5'; }
-                else if (pVal === 2) { pillBg = isLightMode ? '#fceac4' : '#2d2216'; pillColor = isLightMode ? '#92400e' : '#fcd34d'; }
+                if (eVal === 3) { pillBg = isLightMode ? '#fcdbc4' : '#2d1616'; pillColor = isLightMode ? '#9c2b2e' : '#fca5a5'; }
+                else if (eVal === 2) { pillBg = isLightMode ? '#fceac4' : '#2d2216'; pillColor = isLightMode ? '#92400e' : '#fcd34d'; }
                 else { pillBg = isLightMode ? '#d1fae5' : '#162d20'; pillColor = isLightMode ? '#065f46' : '#6ee7b7'; }
+
+                const dependsOn = Array.isArray(task.depends_on) ? task.depends_on : [];
 
                 return (
                   <div key={task.id || task.description} style={{ ...styles.taskRow, borderLeft: `4px solid ${leftBorderColor}` }}>
                     <label style={styles.checkboxLabel}>
                       <input type="checkbox" checked={isDone} onChange={() => handleToggleTask(task.id, task.status)} style={styles.checkboxElement} />
-                      <span style={{ ...styles.taskText, textDecoration: isDone ? 'line-through' : 'none', color: taskTextColor }}>{task.description}</span>
+                      <div style={styles.taskTextColumn}>
+                        <span style={{ ...styles.taskText, textDecoration: isDone ? 'line-through' : 'none', color: taskTextColor }}>
+                          <span style={styles.taskNumber}>#{task.priority}</span>
+                          {task.description}
+                        </span>
+                        {dependsOn.length > 0 && (
+                          <span style={styles.dependsOnText}>
+                            🔗 Depends on: {dependsOn.map((p) => `#${p}`).join(', ')}
+                          </span>
+                        )}
+                      </div>
                     </label>
-                    <span style={{ ...styles.priorityPill, color: pillColor, backgroundColor: pillBg }}>{priorityLabel}</span>
+                    {effortLabel && (
+                      <span style={{ ...styles.priorityPill, color: pillColor, backgroundColor: pillBg }}>{effortLabel}</span>
+                    )}
                   </div>
                 );
               })}
@@ -335,8 +370,11 @@ const getStyles = (isLight) => ({
   listWrapper: { display: 'flex', flexDirection: 'column', gap: '10px' },
   taskRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: isLight ? '#fdf6e3' : '#1a1a1e', padding: '16px 20px', borderRadius: '8px', border: `1px solid ${isLight ? '#e3d8c3' : '#26262b'}` },
   checkboxLabel: { display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', flex: 1 },
-  checkboxElement: { width: '18px', height: '18px', cursor: 'pointer' },
+  checkboxElement: { width: '18px', height: '18px', cursor: 'pointer', flexShrink: 0 },
+  taskTextColumn: { display: 'flex', flexDirection: 'column', gap: '4px' },
   taskText: { fontSize: '15px' },
+  taskNumber: { color: isLight ? '#6366f1' : '#a78bfa', fontWeight: 700, marginRight: '8px' },
+  dependsOnText: { fontSize: '12px', color: isLight ? '#827568' : '#737373', fontWeight: '500' },
   priorityPill: { fontSize: '12px', fontWeight: '600', padding: '4px 10px', borderRadius: '6px', marginLeft: '16px' },
   modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' },
   modalContent: { backgroundColor: isLight ? '#fff' : '#1e1e1e', padding: '32px', borderRadius: '16px', maxWidth: '400px', width: '90%', border: `1px solid ${isLight ? '#e5e7eb' : '#333'}`, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' },
