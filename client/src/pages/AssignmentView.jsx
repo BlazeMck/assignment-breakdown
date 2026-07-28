@@ -192,27 +192,9 @@ export default function AssignmentView() {
     return date.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'long', day: 'numeric', year: 'numeric' });
   };
 
-<<<<<<< HEAD
-  const sortedTasks = useMemo(() => {
-    return [...tasks].sort((a, b) => {
-      const aDateRaw = a.suggested_date || a.due_date || null;
-      const bDateRaw = b.suggested_date || b.due_date || null;
-      const aDate = aDateRaw ? new Date(aDateRaw) : null;
-      const bDate = bDateRaw ? new Date(bDateRaw) : null;
-
-      if (aDate && bDate) return aDate - bDate;
-      if (aDate && !bDate) return -1;
-      if (!aDate && bDate) return 1;
-
-      // fallback to priority ordering when no dates are present
-      return getSortVal(a.priority) - getSortVal(b.priority);
-    });
-  }, [tasks]);
-=======
   // Chronological execution order: priority is the 1-based sequence the AI
   // produced (task #1 first), and depends_on references these numbers.
   const sortedTasks = [...tasks].sort((a, b) => (Number(a.priority) || 0) - (Number(b.priority) || 0));
->>>>>>> main
 
   const displayTitle = toTitleCase(assignment.title);
   const displayDate = formatDate(assignment.due_date);
@@ -291,10 +273,6 @@ export default function AssignmentView() {
               style={styles.purpleButton} 
               onClick={handleRegenerate} 
               disabled={loading || (!isDemo && !!errorMessage)}
-<<<<<<< HEAD
-=======
-              // disabled={true}
->>>>>>> main
             >
               {loading ? 'Processing...' : hasGenerated ? '⟳ Regenerate' : '↻ Generate tasks'}
             </button>
