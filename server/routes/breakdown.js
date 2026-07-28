@@ -3,6 +3,7 @@ const router = express.Router();
 const { randomUUID } = require("crypto");
 const supabase = require("../config/database");
 const { breakdownAssignment } = require("../services/breakdown");
+const { detectDependencies } = require("../services/dependencies");
 
 /**
  * POST /api/breakdown
@@ -42,6 +43,12 @@ router.post("/", async (req, res, next) => {
       rawText: raw_text,
       dueDate: due_date,
     });
+
+    // 1b. Second LLM call: detect which tasks depend on which.
+    const dependencies = await detectDependencies(breakdown.tasks);
+    const dependsOnByPriority = new Map(
+      dependencies.map((entry) => [entry.priority, entry.depends_on]),
+    );
 
     let assignment;
 
@@ -99,6 +106,7 @@ router.post("/", async (req, res, next) => {
       time_estimate: task.time_estimate,
       due_date: task.suggested_date,
       status: task.status,
+      depends_on: dependsOnByPriority.get(task.priority) || [],
     }));
 
     const { data: tasks, error: tasksError } = await supabase

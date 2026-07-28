@@ -7,15 +7,19 @@ const request = require("supertest");
 const app = require("../server");
 const supabase = require("../config/database");
 const { breakdownAssignment } = require("../services/breakdown");
+const { detectDependencies } = require("../services/dependencies");
 
 // Mock the database client (same pattern as the other integration suites).
 jest.mock("../config/database", () => ({
   from: jest.fn(),
 }));
 
-// Mock the OpenAI service so no real API calls are made.
+// Mock the OpenAI services so no real API calls are made.
 jest.mock("../services/breakdown", () => ({
   breakdownAssignment: jest.fn(),
+}));
+jest.mock("../services/dependencies", () => ({
+  detectDependencies: jest.fn(),
 }));
 
 const VALID_BODY = {
@@ -112,6 +116,11 @@ describe("Breakdown Endpoints", () => {
   describe("POST /api/breakdown — success", () => {
     it("should break down the assignment and persist it with its tasks", async () => {
       breakdownAssignment.mockResolvedValue(FAKE_BREAKDOWN);
+      // Task 2 depends on task 1.
+      detectDependencies.mockResolvedValue([
+        { priority: 1, depends_on: [] },
+        { priority: 2, depends_on: [1] },
+      ]);
 
       // First .from() call inserts the assignment, second inserts the tasks.
       const assignmentInsert = {
@@ -148,6 +157,12 @@ describe("Breakdown Endpoints", () => {
         rawText: VALID_BODY.raw_text,
         dueDate: VALID_BODY.due_date,
       });
+      // Dependencies were detected from the generated tasks...
+      expect(detectDependencies).toHaveBeenCalledWith(FAKE_BREAKDOWN.tasks);
+      // ...and merged onto the task rows that were inserted.
+      const insertedTasks = tasksInsert.insert.mock.calls[0][0];
+      expect(insertedTasks.find((t) => t.priority === 1).depends_on).toEqual([]);
+      expect(insertedTasks.find((t) => t.priority === 2).depends_on).toEqual([1]);
     });
 
     it("should surface a clear error when the OpenAI key is missing", async () => {

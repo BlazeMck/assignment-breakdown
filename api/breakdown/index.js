@@ -1,11 +1,12 @@
 const { randomUUID } = require("crypto");
 const supabase = require("../lib/database");
 const { breakdownAssignment } = require("../services/breakdown");
+const { detectDependencies } = require("../services/dependencies");
 
 module.exports = async (req, res) => {
   try {
     if (req.method === "POST") {
-      const { user_id, raw_text, due_date } = req.body || {};
+      const { user_id, raw_text, due_date, existing_assignment_id } = req.body || {};
 
       if (typeof user_id !== "string" || !user_id.trim()) {
         return res.status(400).json({
@@ -36,23 +37,38 @@ module.exports = async (req, res) => {
         dueDate: due_date,
       });
 
+      // Second LLM call: detect which tasks depend on which.
+      const dependencies = await detectDependencies(breakdown.tasks);
+      const dependsOnByPriority = new Map(
+        dependencies.map((entry) => [entry.priority, entry.depends_on]),
+      );
+
       const assignmentData = {
-        id: randomUUID(),
+        id: existing_assignment_id || randomUUID(),
         user_id,
         raw_text: raw_text.trim(),
         title: breakdown.title,
         due_date,
       };
 
+      // Upsert method is used to allow for regenerating an existing assignment.
       const { data: assignmentRows, error: assignmentError } = await supabase
         .from("assignments")
-        .insert([assignmentData])
+        .upsert([assignmentData])
         .select();
 
       if (assignmentError) throw assignmentError;
 
       const assignment = assignmentRows[0];
 
+      // If regenerating, delete existing tasks for this assignment first.
+      if (existing_assignment_id) {
+        const { error: deleteError } = await supabase
+          .from("tasks")
+          .delete()
+          .eq("assignment_id", existing_assignment_id);
+      }
+      
       const taskRows = breakdown.tasks.map((task) => ({
         id: randomUUID(),
         assignment_id: assignment.id,
@@ -61,6 +77,7 @@ module.exports = async (req, res) => {
         time_estimate: task.time_estimate,
         due_date: task.suggested_date,
         status: task.status,
+        depends_on: dependsOnByPriority.get(task.priority) || [],
       }));
 
       const { data: tasks, error: tasksError } = await supabase

@@ -156,14 +156,14 @@ export default function AssignmentView() {
     
     try {
         const activeUser = user || { uuid: "demo-user-123" };
-        await createBreakdown({
+        const response = await createBreakdown({
             user_id: activeUser.uuid,
             title: assignment.title,
             raw_text: assignment.raw_text,
             due_date: assignment.due_date,
             existing_assignment_id: id
         });
-        window.location.reload();
+        setTasks(response.tasks);
     } catch (err) {
         alert("Failed to regenerate: " + err.message);
     } finally {
@@ -192,6 +192,7 @@ export default function AssignmentView() {
     return date.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'long', day: 'numeric', year: 'numeric' });
   };
 
+<<<<<<< HEAD
   const sortedTasks = useMemo(() => {
     return [...tasks].sort((a, b) => {
       const aDateRaw = a.suggested_date || a.due_date || null;
@@ -207,6 +208,11 @@ export default function AssignmentView() {
       return getSortVal(a.priority) - getSortVal(b.priority);
     });
   }, [tasks]);
+=======
+  // Chronological execution order: priority is the 1-based sequence the AI
+  // produced (task #1 first), and depends_on references these numbers.
+  const sortedTasks = [...tasks].sort((a, b) => (Number(a.priority) || 0) - (Number(b.priority) || 0));
+>>>>>>> main
 
   const displayTitle = toTitleCase(assignment.title);
   const displayDate = formatDate(assignment.due_date);
@@ -285,6 +291,10 @@ export default function AssignmentView() {
               style={styles.purpleButton} 
               onClick={handleRegenerate} 
               disabled={loading || (!isDemo && !!errorMessage)}
+<<<<<<< HEAD
+=======
+              // disabled={true}
+>>>>>>> main
             >
               {loading ? 'Processing...' : hasGenerated ? '⟳ Regenerate' : '↻ Generate tasks'}
             </button>
@@ -310,22 +320,38 @@ export default function AssignmentView() {
             <div style={styles.listWrapper}>
               {sortedTasks.map((task) => {
                 const isDone = task.status === 'completed';
-                const pVal = getSortVal(task.priority);
-                const priorityLabel = pVal === 3 ? 'High' : pVal === 2 ? 'Medium' : 'Low';
-                const leftBorderColor = pVal === 3 ? '#6366f1' : pVal === 2 ? '#f59e0b' : '#10b981';
+                // Effort badge reads time_estimate (1 = Low, 2 = Medium, 3 = High);
+                // priority is the task's sequence number, shown as #N below.
+                const eVal = getSortVal(task.time_estimate);
+                const effortLabel = eVal === 3 ? 'High' : eVal === 2 ? 'Medium' : eVal === 1 ? 'Low' : null;
+                const leftBorderColor = eVal === 3 ? '#6366f1' : eVal === 2 ? '#f59e0b' : '#10b981';
                 const taskTextColor = isDone ? (isLightMode ? '#a89f91' : '#525252') : (isLightMode ? '#3b3228' : '#e5e7eb');
                 let pillBg, pillColor;
-                if (pVal === 3) { pillBg = isLightMode ? '#fcdbc4' : '#2d1616'; pillColor = isLightMode ? '#9c2b2e' : '#fca5a5'; }
-                else if (pVal === 2) { pillBg = isLightMode ? '#fceac4' : '#2d2216'; pillColor = isLightMode ? '#92400e' : '#fcd34d'; }
+                if (eVal === 3) { pillBg = isLightMode ? '#fcdbc4' : '#2d1616'; pillColor = isLightMode ? '#9c2b2e' : '#fca5a5'; }
+                else if (eVal === 2) { pillBg = isLightMode ? '#fceac4' : '#2d2216'; pillColor = isLightMode ? '#92400e' : '#fcd34d'; }
                 else { pillBg = isLightMode ? '#d1fae5' : '#162d20'; pillColor = isLightMode ? '#065f46' : '#6ee7b7'; }
+
+                const dependsOn = Array.isArray(task.depends_on) ? task.depends_on : [];
 
                 return (
                   <div key={task.id || task.description} style={{ ...styles.taskRow, borderLeft: `4px solid ${leftBorderColor}` }}>
                     <label style={styles.checkboxLabel}>
                       <input type="checkbox" checked={isDone} onChange={() => handleToggleTask(task.id, task.status)} style={styles.checkboxElement} />
-                      <span style={{ ...styles.taskText, textDecoration: isDone ? 'line-through' : 'none', color: taskTextColor }}>{task.description}</span>
+                      <div style={styles.taskTextColumn}>
+                        <span style={{ ...styles.taskText, textDecoration: isDone ? 'line-through' : 'none', color: taskTextColor }}>
+                          <span style={styles.taskNumber}>#{task.priority}</span>
+                          {task.description}
+                        </span>
+                        {dependsOn.length > 0 && (
+                          <span style={styles.dependsOnText}>
+                            🔗 Depends on: {dependsOn.map((p) => `#${p}`).join(', ')}
+                          </span>
+                        )}
+                      </div>
                     </label>
-                    <span style={{ ...styles.priorityPill, color: pillColor, backgroundColor: pillBg }}>{priorityLabel}</span>
+                    {effortLabel && (
+                      <span style={{ ...styles.priorityPill, color: pillColor, backgroundColor: pillBg }}>{effortLabel}</span>
+                    )}
                   </div>
                 );
               })}
@@ -365,8 +391,11 @@ const getStyles = (isLight) => ({
   listWrapper: { display: 'flex', flexDirection: 'column', gap: '10px' },
   taskRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: isLight ? '#fdf6e3' : '#1a1a1e', padding: '16px 20px', borderRadius: '8px', border: `1px solid ${isLight ? '#e3d8c3' : '#26262b'}` },
   checkboxLabel: { display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', flex: 1 },
-  checkboxElement: { width: '18px', height: '18px', cursor: 'pointer' },
+  checkboxElement: { width: '18px', height: '18px', cursor: 'pointer', flexShrink: 0 },
+  taskTextColumn: { display: 'flex', flexDirection: 'column', gap: '4px' },
   taskText: { fontSize: '15px' },
+  taskNumber: { color: isLight ? '#6366f1' : '#a78bfa', fontWeight: 700, marginRight: '8px' },
+  dependsOnText: { fontSize: '12px', color: isLight ? '#827568' : '#737373', fontWeight: '500' },
   priorityPill: { fontSize: '12px', fontWeight: '600', padding: '4px 10px', borderRadius: '6px', marginLeft: '16px' },
   modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' },
   modalContent: { backgroundColor: isLight ? '#fff' : '#1e1e1e', padding: '32px', borderRadius: '16px', maxWidth: '400px', width: '90%', border: `1px solid ${isLight ? '#e5e7eb' : '#333'}`, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' },
