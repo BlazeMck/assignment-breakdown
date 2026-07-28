@@ -156,14 +156,14 @@ export default function AssignmentView() {
     
     try {
         const activeUser = user || { uuid: "demo-user-123" };
-        await createBreakdown({
+        const response = await createBreakdown({
             user_id: activeUser.uuid,
             title: assignment.title,
             raw_text: assignment.raw_text,
             due_date: assignment.due_date,
             existing_assignment_id: id
         });
-        window.location.reload();
+        setTasks(response.tasks);
     } catch (err) {
         alert("Failed to regenerate: " + err.message);
     } finally {
