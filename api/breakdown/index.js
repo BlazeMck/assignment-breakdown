@@ -6,7 +6,7 @@ const { detectDependencies } = require("../services/dependencies");
 module.exports = async (req, res) => {
   try {
     if (req.method === "POST") {
-      const { user_id, raw_text, due_date } = req.body || {};
+      const { user_id, raw_text, due_date, existing_assignment_id } = req.body || {};
 
       if (typeof user_id !== "string" || !user_id.trim()) {
         return res.status(400).json({
@@ -44,22 +44,31 @@ module.exports = async (req, res) => {
       );
 
       const assignmentData = {
-        id: randomUUID(),
+        id: existing_assignment_id || randomUUID(),
         user_id,
         raw_text: raw_text.trim(),
         title: breakdown.title,
         due_date,
       };
 
+      // Upsert method is used to allow for regenerating an existing assignment.
       const { data: assignmentRows, error: assignmentError } = await supabase
         .from("assignments")
-        .insert([assignmentData])
+        .upsert([assignmentData])
         .select();
 
       if (assignmentError) throw assignmentError;
 
       const assignment = assignmentRows[0];
 
+      // If regenerating, delete existing tasks for this assignment first.
+      if (existing_assignment_id) {
+        const { error: deleteError } = await supabase
+          .from("tasks")
+          .delete()
+          .eq("assignment_id", existing_assignment_id);
+      }
+      
       const taskRows = breakdown.tasks.map((task) => ({
         id: randomUUID(),
         assignment_id: assignment.id,
