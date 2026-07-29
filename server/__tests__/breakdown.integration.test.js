@@ -32,8 +32,20 @@ const VALID_BODY = {
 const FAKE_BREAKDOWN = {
   title: "Climate change paper",
   tasks: [
-    { description: "Research 3 sources", priority: 1, time_estimate: 2, status: "pending" },
-    { description: "Write the draft", priority: 2, time_estimate: 3, status: "pending" },
+    {
+      description: "Research 3 sources",
+      priority: 1,
+      time_estimate: 2,
+      status: "pending",
+      suggested_date: "2026-06-25",
+    },
+    {
+      description: "Write the draft",
+      priority: 2,
+      time_estimate: 3,
+      status: "pending",
+      suggested_date: "2026-06-28",
+    },
   ],
 };
 
@@ -136,6 +148,10 @@ describe("Breakdown Endpoints", () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data.assignment.title).toBe(FAKE_BREAKDOWN.title);
       expect(response.body.data.tasks).toHaveLength(2);
+      expect(tasksInsert.insert).toHaveBeenCalledTimes(1);
+      expect(tasksInsert.insert.mock.calls[0][0][0].due_date).toBe(
+        FAKE_BREAKDOWN.tasks[0].suggested_date,
+      );
       // The LLM was called with the submitted text + due date.
       expect(breakdownAssignment).toHaveBeenCalledWith({
         rawText: VALID_BODY.raw_text,

@@ -308,15 +308,15 @@ export default function Dashboard() {
       ) : viewMode === "calendar" ? (
         <>
             <CalendarView 
-            tasks={projects.flatMap(p => 
+              tasks={projects.flatMap(p => 
                 (p.tasks || []).map(t => ({
-                ...t,
-                projectTitle: p.title, 
-                suggested_date: t.suggested_date || p.due_date 
+                  ...t,
+                  projectTitle: p.title,
+                  suggested_date: t.suggested_date || t.due_date || p.due_date,
                 }))
-            )} 
-            assignments={projects} 
-            isLightMode={isLightMode} 
+              )} 
+              assignments={projects} 
+              isLightMode={isLightMode} 
             />
             {renderTaskList()}
         </>

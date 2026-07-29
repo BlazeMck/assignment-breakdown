@@ -23,8 +23,9 @@ export default function CalendarView({ tasks, assignments, isLightMode }) {
 
   const tasksByDate = {};
   (tasks || []).forEach(t => {
-    if (t.suggested_date) {
-      const dateKey = t.suggested_date.split('T')[0];
+    const taskDate = t.suggested_date || t.due_date;
+    if (taskDate) {
+      const dateKey = taskDate.split('T')[0];
       if (!tasksByDate[dateKey]) tasksByDate[dateKey] = [];
       tasksByDate[dateKey].push(t);
     }

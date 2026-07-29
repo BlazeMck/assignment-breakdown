@@ -104,6 +104,7 @@ router.post("/", async (req, res, next) => {
       description: task.description,
       priority: task.priority,
       time_estimate: task.time_estimate,
+      due_date: task.suggested_date,
       status: task.status,
       depends_on: dependsOnByPriority.get(task.priority) || [],
     }));
