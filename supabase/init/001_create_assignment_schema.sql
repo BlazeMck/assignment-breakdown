@@ -35,10 +35,11 @@ create table if not exists public.tasks (
   assignment_id uuid not null references public.assignments(id) on delete cascade,
   description text not null,
   priority integer not null,
-  time_estimate integer,
+  time_estimate numeric,
   status text not null,
   -- Priority numbers of tasks that must be completed before this one.
-  depends_on integer[] not null default '{}',
+  depends_on text[] not null default '{}',
+  due_date date,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

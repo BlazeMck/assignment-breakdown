@@ -1,0 +1,1 @@
+ALTER TABLE public.tasks ALTER COLUMN time_estimate TYPE numeric USING time_estimate::numeric;
