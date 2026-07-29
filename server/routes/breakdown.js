@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { randomUUID } = require("crypto");
 const supabase = require("../config/database");
-const { breakdownAssignment } = require("../services/breakdown");
+const { breakdownAssignment, calculateTrackStatus } = require("../services/breakdown");
 const { detectDependencies } = require("../services/dependencies");
 
 /**
@@ -43,6 +43,10 @@ router.post("/", async (req, res, next) => {
       rawText: raw_text,
       dueDate: due_date,
     });
+
+    // Calculate if the user is on track based on their available hours
+    const hoursPerDay = req.body.hours_per_day || 1; // defaults to 1 hour/day
+    const trackStatus = calculateTrackStatus(breakdown.tasks, due_date, hoursPerDay);
 
     // 1b. Second LLM call: detect which tasks depend on which.
     const dependencies = await detectDependencies(breakdown.tasks);
@@ -120,7 +124,7 @@ router.post("/", async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      data: { assignment, tasks },
+      data: { assignment, tasks, trackStatus },
     });
   } catch (error) {
     // Surface a clearer message when the server lacks its OpenAI config.
