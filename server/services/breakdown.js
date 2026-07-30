@@ -30,9 +30,7 @@ Guidelines:
 "Find and read 3 peer-reviewed sources"), written in the imperative.
 - Order tasks in the sequence they should be done. The "priority" field is a 1-based \
 integer where 1 is done first.
-- "time_estimate" is the relative effort the task takes, as an integer: 1 = Low \
-(quick), 2 = Medium, 3 = High (most time-consuming/involved). Use 3 for the heaviest \
-tasks and 1 for the quickest.
+- "time_estimate" is the estimated number of hours the task will take to complete (e.g., 0.5, 1.5, 3, 5).
 - "status" must always be the string "pending" for newly created tasks.
 - "suggested_date" must be a string in YYYY-MM-DD format. Distribute the tasks logically \
 between today's date and the assignment's due date. Do not cluster them all on the due date.
@@ -60,9 +58,8 @@ const RESPONSE_SCHEMA = {
           description: { type: "string" },
           priority: { type: "integer", minimum: 1 },
           time_estimate: {
-            type: "integer",
-            enum: [1, 2, 3],
-            description: "Relative effort: 1 = Low, 2 = Medium, 3 = High.",
+            type: "number",
+            description: "Estimated number of hours to complete this task (e.g., 1.5, 2, 4).",
           },
           suggested_date: {
             type: "string",
@@ -110,11 +107,75 @@ async function breakdownAssignment({ rawText, dueDate }) {
 
   const parsed = JSON.parse(raw);
 
-  const tasks = [...parsed.tasks]
-    .sort((a, b) => a.priority - b.priority)
-    .map((task, index) => ({ ...task, priority: index + 1 }));
+  const sortedTasks = [...parsed.tasks].sort((a, b) => a.priority - b.priority);
+  const prioritizedTasks = sortedTasks.map((task, index) => ({ ...task, priority: index + 1 }));
+  const tasks = staggerTasks(prioritizedTasks);
 
   return { title: parsed.title, tasks };
 }
 
-module.exports = { breakdownAssignment, MODEL };
+/**
+ * Calculates if the user has enough time to complete the tasks.
+ * Returns a status object for the frontend to display.
+ */
+function calculateTrackStatus(tasks, dueDate, hoursPerDay) {
+  // 1. Add up all the estimated hours from the AI
+  const totalEstimatedHours = tasks.reduce((sum, task) => sum + (task.time_estimate || 0), 0);
+
+  // 2. Figure out how many days are left until the due date
+  const today = new Date();
+  const due = new Date(dueDate);
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const daysLeft = Math.max(1, Math.ceil((due - today) / msPerDay));
+
+  // 3. Calculate the user's actual available time
+  const safeHoursPerDay = hoursPerDay > 0 ? hoursPerDay : 1; // Prevent multiplying by 0
+  const userAvailableHours = daysLeft * safeHoursPerDay;
+
+  // 4. Compare them!
+  if (userAvailableHours >= totalEstimatedHours) {
+    return {
+      isOnTrack: true,
+      message: `✅ You are on track! This assignment requires ~${totalEstimatedHours} hours. You have ${userAvailableHours} hours available.`,
+      totalEstimatedHours,
+      userAvailableHours,
+      daysLeft
+    };
+  } else {
+    return {
+      isOnTrack: false,
+      message: `⚠️ Warning: This assignment requires ~${totalEstimatedHours} hours, but with ${daysLeft} day(s) left and ${hoursPerDay} hrs/day, you only have ${userAvailableHours} available hours!`,
+      totalEstimatedHours,
+      userAvailableHours,
+      daysLeft
+    };
+  }
+}
+
+module.exports = { breakdownAssignment, MODEL, calculateTrackStatus };
+
+function staggerTasks(tasks) {
+  const scheduledDates = new Set();
+
+  // Sort tasks by priority so the most important task gets to keep its date
+  const sortedTasks = [...tasks].sort((a, b) => a.priority - b.priority);
+
+  return sortedTasks.map(task => {
+    if (!task.suggested_date) return task; // Skip if no date
+
+    let currentDateStr = task.suggested_date;
+    let currentDate = new Date(currentDateStr);
+
+    // If this date is already taken by another task, bump it forward 1 day
+    while (scheduledDates.has(currentDateStr)) {
+      currentDate.setDate(currentDate.getDate() + 1);
+      currentDateStr = currentDate.toISOString().split('T')[0];
+    }
+
+    // Mark this date as taken
+    scheduledDates.add(currentDateStr);
+
+    // Return the task with the new, staggered date
+    return { ...task, suggested_date: currentDateStr };
+  });
+}

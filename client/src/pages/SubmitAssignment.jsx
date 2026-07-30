@@ -17,7 +17,9 @@ export default function SubmitAssignment() {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  const [trackMessage, setTrackMessage] = useState(null);
   const [existingProjects, setExistingProjects] = useState([]); // Added state for limit checking
+  const [hoursPerDay, setHoursPerDay] = useState(1); // New state for hours per day
 
   const [isLightMode, setIsLightMode] = useState(() => {
     const saved = localStorage.getItem('theme');
@@ -96,13 +98,23 @@ export default function SubmitAssignment() {
     setSubmitError(null);
 
     try {
-        await createBreakdown({
+        const responseData = await createBreakdown({
             user_id: activeUid,
             raw_text: form.details,
             due_date: form.dueDate,
-            title: form.title
+            title: form.title,
+            hours_per_day: hoursPerDay
         });
+        
+        // Check if the backend sent us a track status
+        if (responseData && responseData.trackStatus) {
+            setTrackMessage(responseData.trackStatus);
+            setIsSubmitting(false); // Stop the loading spinner
+            return; // Stop here so they can read the message before going to the dashboard
+        }
+                
         navigate("/");
+        
     } catch (err) {
         setSubmitError(err.message);
     } finally {
@@ -157,6 +169,49 @@ export default function SubmitAssignment() {
             <input type="date" name="dueDate" style={{ ...styles.input, borderColor: errors.dueDate ? '#ef4444' : (isLightMode ? '#d6c8b3' : '#26262b') }} value={form.dueDate} onChange={handleChange} disabled={isSubmitting} />
             {errors.dueDate && <span style={styles.errorText}>{errors.dueDate}</span>}
           </div>
+
+          <div style={styles.inputGroup}>
+            <label style={styles.label}>Hours per day you can work <span style={styles.asterisk}>*</span></label>
+            <input 
+              type="number" 
+              min="0.5" 
+              step="0.5" 
+              value={hoursPerDay} 
+              onChange={(e) => setHoursPerDay(parseFloat(e.target.value))} 
+              style={{ ...styles.input, borderColor: (isLightMode ? '#d6c8b3' : '#26262b') }} 
+              disabled={isSubmitting} 
+            />
+          </div>
+
+          {trackMessage && (
+            <div style={{
+                backgroundColor: trackMessage.isOnTrack ? '#14532d' : '#451a1a', // Green if on track, Red if not
+                border: `1px solid ${trackMessage.isOnTrack ? '#16a34a' : '#7f1d1d'}`,
+                color: trackMessage.isOnTrack ? '#86efac' : '#fca5a5',
+                padding: '14px 16px',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '600'
+            }}>
+                {trackMessage.message}
+                <button 
+                    type="button" 
+                    onClick={() => navigate('/')} 
+                    style={{
+                        marginLeft: '10px', 
+                        background: 'rgba(255,255,255,0.1)', 
+                        color: '#fff', 
+                        border: 'none', 
+                        padding: '4px 10px', 
+                        borderRadius: '4px', 
+                        cursor: 'pointer',
+                        fontWeight: '700'
+                    }}
+                >
+                    Go to Dashboard →
+                </button>
+            </div>
+          )}
 
           {submitError && <div style={styles.errorBanner}>{submitError}</div>}
 
